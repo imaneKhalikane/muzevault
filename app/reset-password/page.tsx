@@ -10,67 +10,69 @@ function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
+  // Three distinct stages: 'exchanging' | 'form' | 'success' | 'invalid'
+  const [stage, setStage] = useState<'exchanging' | 'form' | 'success' | 'invalid'>('exchanging')
+
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
-  const [error, setError] = useState('')
+  const [formError, setFormError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [exchanging, setExchanging] = useState(true)
 
   const inputClass =
     'w-full bg-[#fdf8f5] border border-[#edddd4] rounded-xl px-4 py-3 text-[#3d2535] placeholder-[#c5adb8] focus:outline-none focus:border-[#c9829e] transition-colors text-sm'
 
-  // Exchange the code from the URL for a valid session
+  // Step 1: exchange the code from the URL for a valid session
   useEffect(() => {
     async function exchange() {
       const code = searchParams.get('code')
       if (!code) {
-        setError('Invalid or missing reset link. Please request a new one.')
-        setExchanging(false)
+        setStage('invalid')
         return
       }
       const supabase = createClient()
-      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-      if (exchangeError) {
-        setError('This reset link has expired or already been used. Please request a new one.')
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      if (error) {
+        setStage('invalid')
+      } else {
+        setStage('form')
       }
-      setExchanging(false)
     }
     exchange()
   }, [searchParams])
 
-  // Redirect after success
+  // Step 3: redirect after success
   useEffect(() => {
-    if (success) {
+    if (stage === 'success') {
       const timer = setTimeout(() => router.push('/library'), 2000)
       return () => clearTimeout(timer)
     }
-  }, [success, router])
+  }, [stage, router])
 
+  // Step 2: submit new password
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
+    setFormError('')
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
+      setFormError('Password must be at least 8 characters.')
       return
     }
     if (password !== confirm) {
-      setError('Passwords do not match.')
+      setFormError('Passwords do not match.')
       return
     }
 
     setLoading(true)
     try {
       const supabase = createClient()
-      const { error: updateError } = await supabase.auth.updateUser({ password })
-      if (updateError) {
-        setError(updateError.message)
+      const { error } = await supabase.auth.updateUser({ password })
+      if (error) {
+        setFormError(error.message)
         return
       }
-      setSuccess(true)
+      setStage('success')
     } catch {
-      setError('Something went wrong. Please try again.')
+      setFormError('Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -88,36 +90,20 @@ function ResetPasswordForm() {
           </Link>
         </div>
 
-        {/* Loading while exchanging code */}
-        {exchanging && (
+        {/* ── EXCHANGING ── */}
+        {stage === 'exchanging' && (
           <div className="bg-[#fff0eb] border border-[#edddd4] rounded-2xl p-8 text-center">
             <Loader2 className="h-8 w-8 text-[#c9829e] animate-spin mx-auto mb-3" />
             <p className="text-sm text-[#7a5060]">Verifying your reset link…</p>
           </div>
         )}
 
-        {/* Success state */}
-        {!exchanging && success && (
+        {/* ── INVALID / EXPIRED LINK ── */}
+        {stage === 'invalid' && (
           <div className="bg-[#fff0eb] border border-[#edddd4] rounded-2xl p-8 text-center">
-            <div className="h-14 w-14 rounded-full bg-[#c9829e]/15 flex items-center justify-center mx-auto mb-5">
-              <CheckCircle className="h-7 w-7 text-[#c9829e]" />
-            </div>
-            <h2 className="font-heading text-2xl font-light text-[#3d2535] mb-2">
-              Password updated!
-            </h2>
-            <p className="text-sm text-[#7a5060] font-light">
-              Redirecting you to your vault…
+            <p className="text-sm text-red-500 mb-6">
+              This reset link has expired or already been used. Please request a new one.
             </p>
-            <div className="mt-4 flex justify-center">
-              <Loader2 className="h-4 w-4 text-[#c9829e] animate-spin" />
-            </div>
-          </div>
-        )}
-
-        {/* Error with no valid session */}
-        {!exchanging && !success && error && !password && (
-          <div className="bg-[#fff0eb] border border-[#edddd4] rounded-2xl p-8 text-center">
-            <p className="text-sm text-red-500 mb-6">{error}</p>
             <Link
               href="/login"
               className="btn-gradient inline-block px-6 py-3 text-sm font-semibold text-white"
@@ -127,8 +113,8 @@ function ResetPasswordForm() {
           </div>
         )}
 
-        {/* Password form */}
-        {!exchanging && !success && (!error || password) && (
+        {/* ── PASSWORD FORM ── */}
+        {stage === 'form' && (
           <>
             <div className="text-center mb-8">
               <p className="font-heading text-2xl font-light text-[#3d2535]">Set a new password</p>
@@ -167,9 +153,9 @@ function ResetPasswordForm() {
                   />
                 </div>
 
-                {error && (
+                {formError && (
                   <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
-                    {error}
+                    {formError}
                   </div>
                 )}
 
@@ -191,6 +177,24 @@ function ResetPasswordForm() {
               </Link>
             </div>
           </>
+        )}
+
+        {/* ── SUCCESS ── */}
+        {stage === 'success' && (
+          <div className="bg-[#fff0eb] border border-[#edddd4] rounded-2xl p-8 text-center">
+            <div className="h-14 w-14 rounded-full bg-[#c9829e]/15 flex items-center justify-center mx-auto mb-5">
+              <CheckCircle className="h-7 w-7 text-[#c9829e]" />
+            </div>
+            <h2 className="font-heading text-2xl font-light text-[#3d2535] mb-2">
+              Password updated!
+            </h2>
+            <p className="text-sm text-[#7a5060] font-light">
+              Redirecting you to your vault…
+            </p>
+            <div className="mt-4 flex justify-center">
+              <Loader2 className="h-4 w-4 text-[#c9829e] animate-spin" />
+            </div>
+          </div>
         )}
 
       </div>
