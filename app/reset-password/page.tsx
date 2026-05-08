@@ -10,7 +10,13 @@ function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Three distinct stages: 'exchanging' | 'form' | 'success' | 'invalid'
+  // ── Read the code in the render phase, before any effect runs ──────────
+  // This captures it immediately from the URL before Supabase's browser
+  // client can auto-detect and strip the ?code= parameter.
+  const code = searchParams.get('code')
+  console.log('[reset-password] code found in URL:', code)
+
+  // Four explicit stages — no boolean flag soup
   const [stage, setStage] = useState<'exchanging' | 'form' | 'success' | 'invalid'>('exchanging')
 
   const [password, setPassword] = useState('')
@@ -21,26 +27,34 @@ function ResetPasswordForm() {
   const inputClass =
     'w-full bg-[#fdf8f5] border border-[#edddd4] rounded-xl px-4 py-3 text-[#3d2535] placeholder-[#c5adb8] focus:outline-none focus:border-[#c9829e] transition-colors text-sm'
 
-  // Step 1: exchange the code from the URL for a valid session
+  // ── Step 1: exchange code for session — uses the already-captured `code` ─
   useEffect(() => {
+    console.log('[reset-password] exchange effect running, code:', code)
+
     async function exchange() {
-      const code = searchParams.get('code')
       if (!code) {
+        console.log('[reset-password] No code found — showing invalid state')
         setStage('invalid')
         return
       }
+
       const supabase = createClient()
       const { error } = await supabase.auth.exchangeCodeForSession(code)
+
       if (error) {
+        console.log('[reset-password] exchangeCodeForSession failed:', error.message)
         setStage('invalid')
       } else {
+        console.log('[reset-password] exchangeCodeForSession succeeded — showing form')
         setStage('form')
       }
     }
-    exchange()
-  }, [searchParams])
 
-  // Step 3: redirect after success
+    exchange()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // intentionally empty — `code` is captured at render time above
+
+  // ── Step 3: redirect to /library after successful password update ────────
   useEffect(() => {
     if (stage === 'success') {
       const timer = setTimeout(() => router.push('/library'), 2000)
@@ -48,7 +62,7 @@ function ResetPasswordForm() {
     }
   }, [stage, router])
 
-  // Step 2: submit new password
+  // ── Step 2: submit the new password ─────────────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setFormError('')
@@ -70,6 +84,7 @@ function ResetPasswordForm() {
         setFormError(error.message)
         return
       }
+      console.log('[reset-password] Password updated successfully')
       setStage('success')
     } catch {
       setFormError('Something went wrong. Please try again.')
