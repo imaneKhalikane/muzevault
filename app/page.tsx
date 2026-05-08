@@ -1,20 +1,21 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Copy, Sparkles, Zap, ImageIcon, Video, BookOpen, Tag, RefreshCw, Download } from 'lucide-react'
 
-const HERO_GRID = [
-  'from-rose-100 to-pink-100',
-  'from-pink-100 to-fuchsia-100',
-  'from-amber-100 to-rose-100',
-  'from-fuchsia-100 to-pink-100',
-  'from-rose-50 to-amber-100',
-  'from-pink-100 to-rose-100',
-  'from-amber-50 to-pink-100',
-  'from-rose-100 to-fuchsia-50',
-  'from-fuchsia-50 to-amber-100',
-  'from-pink-50 to-rose-100',
-  'from-rose-100 to-pink-50',
-  'from-amber-100 to-fuchsia-100',
+const AVATAR_IMAGES = [
+  '/avatars/2026-04-29 Image OpenArt - 8b24ce84.png',
+  '/avatars/2026-04-29 Image OpenArt - 9738ef80.png',
+  '/avatars/2026-04-29 Image OpenArt - 9edc5f28 (v1).png',
+  '/avatars/2026-04-29 Image OpenArt - a3c3b85b.png',
+  '/avatars/2026-05-07 Image OpenArt - 25dcc78d.png',
+  '/avatars/2026-05-07 Image OpenArt - 5f1e022a.png',
+  '/avatars/2026-05-07 Image OpenArt - 938bebc3.png',
+  '/avatars/2026-05-07 Image OpenArt - dc467a8a.png',
+  '/avatars/openart-ec79c9ee424f4e329c536fef10967e04_raw_1777901070125_be642075 (1).png',
 ]
+
+// Fill 12 slots by cycling through the 9 images
+const HERO_GRID = Array.from({ length: 12 }, (_, i) => AVATAR_IMAGES[i % AVATAR_IMAGES.length])
 
 const HOW_IT_WORKS = [
   {
@@ -73,29 +74,46 @@ export default function LandingPage() {
 
       {/* ── HERO ── */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-        {/* Soft warm grid background */}
-        <div className="absolute inset-0 grid grid-cols-4 grid-rows-3 gap-0.5 opacity-50">
-          {HERO_GRID.map((gradient, i) => (
-            <div key={i} className={`bg-gradient-to-br ${gradient}`} />
+        {/* Avatar image grid */}
+        <div className="absolute inset-0 grid grid-cols-4 grid-rows-3 gap-0.5">
+          {HERO_GRID.map((src, i) => (
+            <div key={i} className="relative overflow-hidden">
+              <Image
+                src={src}
+                alt=""
+                fill
+                className="object-cover object-top"
+                sizes="25vw"
+                priority={i < 4}
+              />
+              {/* Per-cell brand gradient overlay */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    'linear-gradient(to bottom, rgba(201,130,158,0.5) 0%, rgba(61,37,53,0.7) 100%)',
+                }}
+              />
+            </div>
           ))}
         </div>
-        {/* Fade overlay — to background colour */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#fdf8f5]/50 via-[#fdf8f5]/30 to-[#fdf8f5]" />
+        {/* Additional fade to background at very bottom so content blends in */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#fdf8f5]" />
 
         <div className="relative z-10 mx-auto max-w-4xl px-6 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#edddd4] bg-[#fff0eb] px-4 py-1.5 text-sm text-[#c9829e] mb-8 font-medium">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/20 backdrop-blur-sm px-4 py-1.5 text-sm text-white mb-8 font-medium">
             <Sparkles className="h-3.5 w-3.5" />
             AI Creator Vault
           </div>
 
-          <h1 className="font-heading text-6xl md:text-8xl font-light tracking-tight leading-[1.05] text-[#3d2535] mb-4">
+          <h1 className="font-heading text-6xl md:text-8xl font-light tracking-tight leading-[1.05] text-white mb-4 drop-shadow-md">
             Prompt like a director.
           </h1>
-          <h1 className="font-heading text-6xl md:text-8xl font-light tracking-tight leading-[1.05] mb-8">
+          <h1 className="font-heading text-6xl md:text-8xl font-light tracking-tight leading-[1.05] mb-8 drop-shadow-md">
             <span className="gradient-text">Create like a visionary.</span>
           </h1>
 
-          <p className="text-base md:text-lg text-[#7a5060] max-w-xl mx-auto mb-10 leading-relaxed font-light">
+          <p className="text-base md:text-lg text-white/80 max-w-xl mx-auto mb-10 leading-relaxed font-light">
             Unlock a curated vault of AI avatar image prompts and motion prompts — everything you
             need to create professional talking-head videos without a camera.
           </p>
