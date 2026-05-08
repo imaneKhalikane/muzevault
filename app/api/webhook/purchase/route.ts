@@ -15,32 +15,44 @@ interface SystemePayload {
   [key: string]: unknown
 }
 
-export async function POST(req: NextRequest) {
-  // ── 1. Read raw body (needed for HMAC verification) ───────────────────────
-  const rawBody = await req.text()
-
-  // ── 2. Verify HMAC SHA256 signature ──────────────────────────────────────
-  const secret = process.env.WEBHOOK_SECRET
-  const signature = req.headers.get('x-webhook-signature')
-
-  if (!secret) {
-    console.error('[webhook] WEBHOOK_SECRET env var is not set')
-    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
-  }
-
-  if (!signature) {
-    console.warn('[webhook] Missing x-webhook-signature header')
-    return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
-  }
-
-  const expectedSignature = crypto
+function verifySignature(rawBody: string, signature: string, secret: string): boolean {
+  const expected = crypto
     .createHmac('sha256', secret)
     .update(rawBody)
     .digest('hex')
 
-  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
-    console.warn('[webhook] Signature mismatch — unauthorized request')
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // timingSafeEqual requires same-length buffers — guard against length mismatch
+  const a = Buffer.from(expected)
+  const b = Buffer.from(signature)
+  if (a.length !== b.length) return false
+
+  return crypto.timingSafeEqual(a, b)
+}
+
+export async function POST(req: NextRequest) {
+  // ── 1. Read raw body first (required for HMAC) ────────────────────────────
+  const rawBody = await req.text()
+
+  // ── 2. Verify HMAC SHA256 signature ──────────────────────────────────────
+  const secret = process.env.WEBHOOK_SECRET
+
+  if (!secret) {
+    // Fallback: skip check if secret is not configured (for testing)
+    console.warn('[webhook] ⚠️  WEBHOOK_SECRET not set — skipping signature check')
+  } else {
+    const signature = req.headers.get('x-webhook-signature') ?? ''
+
+    if (!signature) {
+      console.warn('[webhook] Missing x-webhook-signature header')
+      return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
+    }
+
+    if (!verifySignature(rawBody, signature, secret)) {
+      console.warn('[webhook] Signature mismatch — unauthorized')
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    console.info('[webhook] ✓ Signature verified')
   }
 
   // ── 3. Parse body ─────────────────────────────────────────────────────────
@@ -64,8 +76,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing email in payload' }, { status: 400 })
   }
 
-  // ── 5. Create Supabase Auth user ──────────────────────────────────────────
-  const supabase = createAdminClient()
+  // ── 5. Create Supabase Auth user (uses SUPABASE_SERVICE_ROLE_KEY) ─────────
+  let supabase
+  try {
+    supabase = createAdminClient()
+  } catch (err) {
+    console.error('[webhook] Failed to init Supabase admin client:', err)
+    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+  }
 
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email,
