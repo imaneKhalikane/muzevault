@@ -47,13 +47,20 @@ export default function PromptModal({ prompts, initialIndex, onClose }: Props) {
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#3d2535]/40 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="relative w-full max-w-5xl max-h-[90vh] bg-[#fdf8f5] border border-[#edddd4] rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-xl">
+      <div className="relative w-full max-w-[90vw] max-h-[90vh] bg-[#fdf8f5] border border-[#edddd4] rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-xl">
 
         {/* ── LEFT: IMAGE (60%) ── */}
-        <div className="relative md:w-[60%] bg-[#fff0eb] flex-shrink-0">
-          <div className="relative w-full h-72 md:h-full min-h-[300px]">
+        <div className="relative md:w-[60%] bg-[#1a1014] flex-shrink-0 flex items-center justify-center">
+          {/* Fixed height on mobile, full height on desktop */}
+          <div className="relative w-full h-72 md:h-full md:min-h-[500px]">
             {prompt.image_url ? (
-              <Image src={prompt.image_url} alt={prompt.title} fill className="object-cover" sizes="60vw" />
+              <Image
+                src={prompt.image_url}
+                alt={prompt.title}
+                fill
+                className="object-contain"
+                sizes="(max-width: 768px) 90vw, 54vw"
+              />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center">
                 <span className="text-8xl">🎭</span>
