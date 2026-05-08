@@ -1,54 +1,70 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 interface SystemePayload {
-  contact?: {
+  customer?: {
     email?: string
-    first_name?: string
-    last_name?: string
+    fields?: {
+      first_name?: string
+      surname?: string
+      [key: string]: unknown
+    }
+    [key: string]: unknown
   }
-  email?: string
-  first_name?: string
-  last_name?: string
-  secret?: string
-  [key: string]: unknown // allow logging of any extra fields
+  [key: string]: unknown
 }
 
 export async function POST(req: NextRequest) {
-  // ── LOG ALL HEADERS ───────────────────────────────────────────────────────
-  const headers: Record<string, string> = {}
-  req.headers.forEach((value, key) => { headers[key] = value })
-  console.log('[webhook] ===== INCOMING REQUEST =====')
-  console.log('[webhook] Headers:', JSON.stringify(headers, null, 2))
+  // ── 1. Read raw body (needed for HMAC verification) ───────────────────────
+  const rawBody = await req.text()
 
-  // ── PARSE & LOG BODY ──────────────────────────────────────────────────────
-  let body: SystemePayload = {}
+  // ── 2. Verify HMAC SHA256 signature ──────────────────────────────────────
+  const secret = process.env.WEBHOOK_SECRET
+  const signature = req.headers.get('x-webhook-signature')
+
+  if (!secret) {
+    console.error('[webhook] WEBHOOK_SECRET env var is not set')
+    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
+  }
+
+  if (!signature) {
+    console.warn('[webhook] Missing x-webhook-signature header')
+    return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
+  }
+
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(rawBody)
+    .digest('hex')
+
+  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
+    console.warn('[webhook] Signature mismatch — unauthorized request')
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // ── 3. Parse body ─────────────────────────────────────────────────────────
+  let body: SystemePayload
   try {
-    body = await req.json()
-    console.log('[webhook] Body:', JSON.stringify(body, null, 2))
-  } catch (err) {
-    console.log('[webhook] Failed to parse JSON body:', err)
+    body = JSON.parse(rawBody)
+  } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  // ── SECRET CHECK DISABLED ─────────────────────────────────────────────────
-  // TODO: re-enable once we confirm what Systeme.io sends
-  console.log('[webhook] Secret check DISABLED — skipping auth')
-
-  // ── EXTRACT CONTACT FIELDS ────────────────────────────────────────────────
-  const email = body.contact?.email ?? body.email
-  const firstName = body.contact?.first_name ?? body.first_name
-  const lastName = body.contact?.last_name ?? body.last_name
+  // ── 4. Extract customer fields ────────────────────────────────────────────
+  const email = body.customer?.email
+  const firstName = body.customer?.fields?.first_name
+  const lastName = body.customer?.fields?.surname
   const fullName = [firstName, lastName].filter(Boolean).join(' ').trim()
 
-  console.log('[webhook] Extracted — email:', email, '| name:', fullName)
+  console.info(`[webhook] New Sale — email: ${email} | name: ${fullName}`)
 
   if (!email) {
-    console.warn('[webhook] No email found in payload — skipping user creation')
-    return NextResponse.json({ received: true, warning: 'No email in payload' }, { status: 200 })
+    console.warn('[webhook] No email found in payload')
+    return NextResponse.json({ error: 'Missing email in payload' }, { status: 400 })
   }
 
-  // ── CREATE SUPABASE USER ──────────────────────────────────────────────────
+  // ── 5. Create Supabase Auth user ──────────────────────────────────────────
   const supabase = createAdminClient()
 
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -68,10 +84,10 @@ export async function POST(req: NextRequest) {
     }
     console.info(`[webhook] User already exists: ${email}`)
   } else {
-    console.info(`[webhook] ✓ Auth user created for: ${email}`)
+    console.info(`[webhook] ✓ Auth user created: ${email}`)
   }
 
-  // ── UPSERT PROFILE ────────────────────────────────────────────────────────
+  // ── 6. Upsert profile ─────────────────────────────────────────────────────
   let userId = authData?.user?.id
   if (!userId) {
     const { data: listData } = await supabase.auth.admin.listUsers()
@@ -86,10 +102,9 @@ export async function POST(req: NextRequest) {
     if (profileError) {
       console.error('[webhook] Profile upsert error:', profileError.message)
     } else {
-      console.info(`[webhook] ✓ Profile upserted for: ${email}`)
+      console.info(`[webhook] ✓ Profile upserted: ${email}`)
     }
   }
 
-  console.log('[webhook] ===== DONE =====')
   return NextResponse.json({ success: true }, { status: 200 })
 }
