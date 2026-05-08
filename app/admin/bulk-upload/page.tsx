@@ -31,15 +31,37 @@ interface ImageEntry {
 // ── Helpers ────────────────────────────────────────────────────────────────
 const TAG_OPTIONS = ['Ad campaign', 'UGC', 'Editorial', 'Portrait', 'Commercial', 'Lifestyle', 'Fashion', 'Beauty']
 
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = reader.result as string
-      resolve(result.split(',')[1]) // strip "data:image/...;base64,"
+// Resize to max 1024×1024 and encode as JPEG quality 0.7 before sending
+// to the API — keeps payloads well under the 4 MB Vercel function limit.
+function compressImage(file: File): Promise<{ base64: string; mimeType: string }> {
+  return new Promise((resolve) => {
+    const img = new window.Image()
+    img.onload = () => {
+      const maxSize = 1024
+      let { width, height } = img
+
+      if (width > height && width > maxSize) {
+        height = Math.round((height * maxSize) / width)
+        width = maxSize
+      } else if (height > maxSize) {
+        width = Math.round((width * maxSize) / height)
+        height = maxSize
+      }
+
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0, width, height)
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7)
+      // dataUrl = "data:image/jpeg;base64,<data>"
+      resolve({
+        base64: dataUrl.split(',')[1],
+        mimeType: 'image/jpeg',
+      })
     }
-    reader.onerror = reject
-    reader.readAsDataURL(file)
+    img.src = URL.createObjectURL(file)
   })
 }
 
@@ -172,11 +194,11 @@ export default function BulkUploadPage() {
       setItems((prev) => prev.map((p) => p.id === item.id ? { ...p, status: 'generating' } : p))
 
       try {
-        const base64 = await fileToBase64(item.file)
+        const { base64, mimeType } = await compressImage(item.file)
         const res = await fetch('/api/generate-prompts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageData: base64, mimeType: item.file.type }),
+          body: JSON.stringify({ imageData: base64, mimeType }),
         })
         const data = await res.json()
 

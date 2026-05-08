@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Increase body size limit to handle base64-encoded images
 export const maxDuration = 60 // seconds
 
 const PROMPT = `You are an expert AI avatar prompt writer for Studio LumAI. You write prompts in a very specific professional style. Study these examples carefully and match the EXACT structure, vocabulary, and level of detail:
