@@ -54,7 +54,7 @@ export default function LoginPage() {
     try {
       const supabase = createClient()
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: 'https://muzevault.studiolumai.com/reset-password',
+        redirectTo: 'https://muzevault.studiolumai.com/auth/confirm',
       })
       if (error) { setResetError(error.message); return }
       setView('forgot-sent')
