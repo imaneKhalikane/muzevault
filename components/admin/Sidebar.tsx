@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, FileText, Tag, LogOut } from 'lucide-react'
+import { LayoutDashboard, FileText, Tag, Upload, LogOut } from 'lucide-react'
 import clsx from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 
@@ -10,6 +10,7 @@ const NAV = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/prompts', label: 'Prompts', icon: FileText, exact: false },
   { href: '/admin/categories', label: 'Categories', icon: Tag, exact: false },
+  { href: '/admin/bulk-upload', label: 'Bulk Upload', icon: Upload, exact: false },
 ]
 
 export default function Sidebar() {
