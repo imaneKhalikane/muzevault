@@ -64,7 +64,7 @@ export default function LandingPage() {
             <Link href="/login" className="text-sm text-[#7a5060] hover:text-[#3d2535] transition-colors font-medium">
               Sign In
             </Link>
-            <Link href={stanUrl} className="btn-gradient px-5 py-2.5 text-sm font-semibold text-white shadow-sm">
+            <Link href="https://www.studiolumai.com/muzevaultorder" className="btn-gradient px-5 py-2.5 text-sm font-semibold text-white shadow-sm">
               Get Access
             </Link>
           </div>
@@ -100,16 +100,12 @@ export default function LandingPage() {
             need to create professional talking-head videos without a camera.
           </p>
 
-          <p className="text-lg font-semibold text-[#c9829e] mb-4 tracking-wide">
-            $59 — Lifetime Access
-          </p>
-
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href={stanUrl}
+              href="https://www.studiolumai.com/muzevaultorder"
               className="btn-gradient w-full sm:w-auto px-9 py-4 text-base font-semibold text-white shadow-md"
             >
-              Get Access — Lifetime Deal
+              Get Access — $59 Lifetime Deal
             </Link>
             <Link
               href="/login"
@@ -189,14 +185,11 @@ export default function LandingPage() {
             Join creators using Studio LumAI to produce professional AI content — no camera, no
             studio, no limits.
           </p>
-          <p className="text-xl font-semibold text-[#c9829e] mb-6 tracking-wide">
-            $59 — Lifetime Access
-          </p>
           <Link
-            href={stanUrl}
+            href="https://www.studiolumai.com/muzevaultorder"
             className="inline-block btn-gradient px-12 py-5 text-lg font-semibold text-white shadow-lg"
           >
-            Get Lifetime Access
+            Get Access — $59 Lifetime Deal
           </Link>
         </div>
       </section>
