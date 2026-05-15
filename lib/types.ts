@@ -18,7 +18,8 @@ export type Prompt = {
   tags: string[]
   image_url: string
   image_prompt: string
-  motion_prompt: string
+  motion_prompt: string | null
+  video_url: string | null
   created_at: string
   category?: Category
 }

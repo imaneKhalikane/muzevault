@@ -24,6 +24,7 @@ interface ImageEntry {
   tags: string[]
   imagePrompt: string
   motionPrompt: string
+  videoFile?: File
   status: ItemStatus
   error?: string
 }
@@ -227,14 +228,27 @@ export default function BulkUploadPage() {
 
         const { data: { publicUrl } } = supabase.storage.from('prompt-images').getPublicUrl(storageData.path)
 
+        // Upload video if one was attached
+        let videoPublicUrl: string | null = null
+        if (item.videoFile) {
+          const vExt = item.videoFile.name.split('.').pop()
+          const vPath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${vExt}`
+          const { data: vData, error: vErr } = await supabase.storage
+            .from('prompt-videos').upload(vPath, item.videoFile, { cacheControl: '3600', upsert: false })
+          if (!vErr && vData) {
+            const { data: { publicUrl: vUrl } } = supabase.storage.from('prompt-videos').getPublicUrl(vData.path)
+            videoPublicUrl = vUrl
+          }
+        }
+
         const { error: insertError } = await supabase.from('prompts').insert({
           title: item.title,
           category_id: item.categoryId || null,
           tags: item.tags,
           image_url: publicUrl,
           image_prompt: item.imagePrompt,
-          // Save null if motion prompts were not generated
           motion_prompt: generateMotionPrompts ? (item.motionPrompt || null) : null,
+          video_url: videoPublicUrl,
         })
         if (insertError) throw insertError
         saved++
@@ -529,6 +543,37 @@ export default function BulkUploadPage() {
                         rows={5}
                         placeholder={item.status === 'error' ? 'Generation failed — type manually' : ''}
                         className={`${inputClass} resize-y`} />
+                    </div>
+                  )}
+
+                  {/* Video upload slot — only when motion prompt was generated */}
+                  {generateMotionPrompts && item.motionPrompt && (
+                    <div className="col-span-2">
+                      <label className="block text-xs font-medium text-[#7a5060] mb-1.5 flex items-center gap-1">
+                        <Video className="h-3 w-3 text-[#c9829e]" />
+                        Motion Video
+                        <span className="text-[#c5adb8] font-normal ml-1">(optional)</span>
+                      </label>
+                      {item.videoFile ? (
+                        <div className="flex items-center gap-3 bg-[#fdf8f5] border border-[#edddd4] rounded-xl px-4 py-2.5">
+                          <Video className="h-4 w-4 text-emerald-500 shrink-0" />
+                          <span className="text-xs text-[#3d2535] truncate flex-1">{item.videoFile.name}</span>
+                          <button type="button"
+                            onClick={() => updateItem(item.id, { videoFile: undefined })}
+                            className="text-xs text-[#7a5060] hover:text-red-500 transition-colors shrink-0">
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex items-center gap-2 text-xs text-[#7a5060] cursor-pointer border border-dashed border-[#edddd4] rounded-xl px-4 py-3 hover:border-[#c9829e] hover:text-[#c9829e] hover:bg-[#fff0eb] transition-all w-fit">
+                          <Video className="h-3.5 w-3.5" />
+                          Upload video (optional)
+                          <input type="file" accept=".mp4,.mov,.webm,video/*" className="hidden"
+                            onChange={(e) => {
+                              if (e.target.files?.[0]) updateItem(item.id, { videoFile: e.target.files[0] })
+                            }} />
+                        </label>
+                      )}
                     </div>
                   )}
                 </div>

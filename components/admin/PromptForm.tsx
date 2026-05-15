@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Video, CheckCircle, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { type Category, type Prompt } from '@/lib/types'
 import ImageUpload from './ImageUpload'
@@ -24,6 +24,8 @@ export default function PromptForm({ categories, prompt }: Props) {
   const [imageUrl, setImageUrl] = useState(prompt?.image_url ?? '')
   const [imagePrompt, setImagePrompt] = useState(prompt?.image_prompt ?? '')
   const [motionPrompt, setMotionPrompt] = useState(prompt?.motion_prompt ?? '')
+  const [videoUrl, setVideoUrl] = useState(prompt?.video_url ?? '')
+  const [videoUploading, setVideoUploading] = useState(false)
   const [customTag, setCustomTag] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -38,13 +40,44 @@ export default function PromptForm({ categories, prompt }: Props) {
     setCustomTag('')
   }
 
+  async function handleVideoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setVideoUploading(true)
+    try {
+      const supabase = createClient()
+      const ext = file.name.split('.').pop()
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { data, error: uploadErr } = await supabase.storage
+        .from('prompt-videos')
+        .upload(path, file, { cacheControl: '3600', upsert: false })
+      if (uploadErr) throw uploadErr
+      const { data: { publicUrl } } = supabase.storage.from('prompt-videos').getPublicUrl(data.path)
+      setVideoUrl(publicUrl)
+    } catch (err) {
+      console.error('[video-upload]', err)
+      setError('Video upload failed. Please try again.')
+    } finally {
+      setVideoUploading(false)
+      e.target.value = ''
+    }
+  }
+
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setSaving(true)
     try {
       const supabase = createClient()
-      const payload = { title, category_id: categoryId || null, tags, image_url: imageUrl, image_prompt: imagePrompt, motion_prompt: motionPrompt }
+      const payload = {
+        title,
+        category_id: categoryId || null,
+        tags,
+        image_url: imageUrl,
+        image_prompt: imagePrompt,
+        motion_prompt: motionPrompt || null,
+        video_url: videoUrl || null,
+      }
       if (isEdit) {
         const { error: err } = await supabase.from('prompts').update(payload).eq('id', prompt.id)
         if (err) throw err
@@ -133,12 +166,66 @@ export default function PromptForm({ categories, prompt }: Props) {
           placeholder="Paste the motion / animation prompt here…" className={`${inputClass} resize-y`} />
       </div>
 
+      {/* Video upload — only shown when motion prompt exists */}
+      {motionPrompt.trim() && (
+        <div>
+          <label className="block text-sm font-medium text-[#7a5060] mb-2 flex items-center gap-1.5">
+            <Video className="h-4 w-4 text-[#c9829e]" />
+            Motion Video <span className="text-[#c5adb8] font-normal">(optional)</span>
+          </label>
+
+          {videoUrl ? (
+            <div className="space-y-3">
+              {/* Preview player */}
+              <div className="rounded-xl overflow-hidden bg-black aspect-video border border-[#edddd4]">
+                <video src={videoUrl} controls className="w-full h-full object-contain" />
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-xs text-emerald-600 flex items-center gap-1.5">
+                  <CheckCircle className="h-3.5 w-3.5" />Video ready
+                </span>
+                <label className="text-xs text-[#c9829e] cursor-pointer hover:text-[#3d2535] transition-colors font-medium">
+                  Replace video
+                  <input type="file" accept=".mp4,.mov,.webm,video/*" className="hidden"
+                    onChange={handleVideoUpload} disabled={videoUploading} />
+                </label>
+                <button type="button" onClick={() => setVideoUrl('')}
+                  className="text-xs text-[#7a5060] hover:text-red-500 transition-colors flex items-center gap-1">
+                  <X className="h-3 w-3" />Remove
+                </button>
+              </div>
+            </div>
+          ) : (
+            <label className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed cursor-pointer transition-all py-10 ${
+              videoUploading
+                ? 'border-[#c9829e] bg-[#c9829e]/5 cursor-not-allowed'
+                : 'border-[#edddd4] hover:border-[#e8b4c8] hover:bg-[#fff0eb]'
+            }`}>
+              {videoUploading ? (
+                <>
+                  <Loader2 className="h-8 w-8 text-[#c9829e] animate-spin" />
+                  <span className="text-sm text-[#7a5060]">Uploading video…</span>
+                </>
+              ) : (
+                <>
+                  <Video className="h-8 w-8 text-[#c5adb8]" />
+                  <span className="text-sm font-medium text-[#7a5060]">Upload Motion Video</span>
+                  <span className="text-xs text-[#c5adb8]">MP4, MOV, WEBM · drag & drop or click</span>
+                </>
+              )}
+              <input type="file" accept=".mp4,.mov,.webm,video/*" className="hidden"
+                onChange={handleVideoUpload} disabled={videoUploading} />
+            </label>
+          )}
+        </div>
+      )}
+
       {error && (
         <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">{error}</div>
       )}
 
       <div className="flex items-center gap-3 pt-2">
-        <button type="submit" disabled={saving} className="btn-gradient px-6 py-3 font-semibold text-white flex items-center gap-2 disabled:opacity-60">
+        <button type="submit" disabled={saving || videoUploading} className="btn-gradient px-6 py-3 font-semibold text-white flex items-center gap-2 disabled:opacity-60">
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
           {isEdit ? 'Save Changes' : 'Create Prompt'}
         </button>
