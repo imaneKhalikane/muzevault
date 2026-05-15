@@ -203,7 +203,7 @@ export default function PromptModal({ prompts, initialIndex, onClose }: Props) {
                 S
               </div>
               <div>
-                <p className="text-sm font-semibold text-[#3d2535] font-heading">Studio LumAI</p>
+                <p className="text-sm font-semibold text-[#3d2535] font-heading">Solène</p>
                 <p className="text-xs text-[#7a5060]">AI Creator | AI Founder</p>
               </div>
             </div>

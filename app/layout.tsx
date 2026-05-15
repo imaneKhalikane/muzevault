@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Studio LumAI — AI Creator Vault',
-  description: 'Prompt like a director. Create like a visionary.',
+  title: 'Solène — AI Creator Vault',
+  description: 'Curated AI avatar prompts by Solène. Prompt like a director. Create like a visionary.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

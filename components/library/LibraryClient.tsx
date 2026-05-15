@@ -64,16 +64,21 @@ export default function LibraryClient({ categories, prompts }: Props) {
             S
           </div>
           <div>
-            <p className="font-heading font-semibold text-[#3d2535] text-sm drop-shadow">Studio LumAI</p>
+            <p className="font-heading font-semibold text-[#3d2535] text-sm drop-shadow">Solène</p>
             <p className="text-xs text-[#7a5060]">AI Creator | AI Founder</p>
           </div>
         </div>
 
         {/* Instagram — top right */}
-        <div className="absolute top-4 right-6 flex items-center gap-1.5 text-xs text-[#7a5060] bg-[#fdf8f5]/70 backdrop-blur-sm rounded-full px-3 py-1.5 border border-[#edddd4]">
+        <a
+          href="https://www.instagram.com/iamsolene.ai/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute top-4 right-6 flex items-center gap-1.5 text-xs text-[#c9829e] bg-[#fdf8f5]/70 backdrop-blur-sm rounded-full px-3 py-1.5 border border-[#e8b4c8] hover:bg-[#fff0eb] transition-colors"
+        >
           <Instagram className="h-3.5 w-3.5" />
-          @studiolumAI
-        </div>
+          @iamsolene.ai
+        </a>
       </div>
 
       {/* ── MAIN CONTENT ── */}

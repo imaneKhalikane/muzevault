@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export const maxDuration = 60
 
 function buildPrompt(imagePrompt: string): string {
-  return `You are an expert motion prompt writer for Studio LumAI. Based on this image and its image prompt below, write a cinematic motion prompt following this exact style:
+  return `You are an expert motion prompt writer for Solène. Based on this image and its image prompt below, write a cinematic motion prompt following this exact style:
 
 Image prompt: ${imagePrompt}
 

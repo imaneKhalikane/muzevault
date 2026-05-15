@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const maxDuration = 60 // seconds
 
-const PERSONA = `You are an expert AI avatar prompt writer for Studio LumAI. You write prompts in a very specific professional style. Study these examples carefully and match the EXACT structure, vocabulary, and level of detail:`
+const PERSONA = `You are an expert AI avatar prompt writer for Solène. You write prompts in a very specific professional style. Study these examples carefully and match the EXACT structure, vocabulary, and level of detail:`
 
 const IMAGE_EXAMPLES = `
 === IMAGE PROMPT EXAMPLES ===

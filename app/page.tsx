@@ -57,7 +57,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
           <div>
             <span className="font-heading text-xl font-semibold text-[#3d2535] tracking-wide">
-              Studio LumAI
+              Solène
             </span>
             <div className="site-subtitle">AI Creator Vault</div>
           </div>
@@ -200,7 +200,7 @@ export default function LandingPage() {
             <span className="gradient-text">AI brand?</span>
           </h2>
           <p className="text-[#7a5060] text-lg mb-8 font-light">
-            Join creators using Studio LumAI to produce professional AI content — no camera, no
+            Join creators using Solène&apos;s vault to produce professional AI content — no camera, no
             studio, no limits.
           </p>
           <Link
@@ -216,11 +216,11 @@ export default function LandingPage() {
       <footer className="border-t border-[#edddd4] py-8 px-6 bg-[#fff0eb]">
         <div className="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <span className="font-heading text-base font-semibold text-[#3d2535]">Studio LumAI</span>
+            <span className="font-heading text-base font-semibold text-[#3d2535]">Solène</span>
             <div className="site-subtitle mt-0.5">AI Creator Vault</div>
           </div>
           <p className="text-sm text-[#7a5060]">
-            © {new Date().getFullYear()} Studio LumAI. All rights reserved.
+            © {new Date().getFullYear()} Solène. All rights reserved.
           </p>
           <Link href="/login" className="text-sm text-[#7a5060] hover:text-[#3d2535] transition-colors">
             Member Login

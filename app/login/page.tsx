@@ -72,7 +72,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-10">
           <Link href="/" className="inline-block">
-            <h1 className="font-heading text-3xl font-semibold text-[#3d2535]">Studio LumAI</h1>
+            <h1 className="font-heading text-3xl font-semibold text-[#3d2535]">Solène</h1>
             <div className="site-subtitle mt-1">AI Creator Vault</div>
           </Link>
         </div>

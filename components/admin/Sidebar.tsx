@@ -27,7 +27,7 @@ export default function Sidebar() {
     <aside className="w-60 flex-shrink-0 bg-[#fff0eb] border-r border-[#edddd4] min-h-screen flex flex-col">
       <div className="p-6 border-b border-[#edddd4]">
         <Link href="/admin">
-          <span className="font-heading text-lg font-semibold text-[#3d2535]">Studio LumAI</span>
+          <span className="font-heading text-lg font-semibold text-[#3d2535]">Solène</span>
           <div className="site-subtitle mt-0.5">AI Creator Vault</div>
         </Link>
       </div>
