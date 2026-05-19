@@ -153,6 +153,17 @@ export default function BulkUploadPage() {
     updateItem(id, { tags: currentTags.includes(tag) ? currentTags.filter((t) => t !== tag) : [...currentTags, tag] })
   }
 
+  // ── Go to review without AI ────────────────────────────────────────────
+  function goToReview() {
+    // Apply global category & tags to every item before entering review
+    setItems((prev) => prev.map((item) => ({
+      ...item,
+      categoryId: item.categoryId || globalCategoryId,
+      tags: item.tags.length > 0 ? item.tags : [...globalTags],
+    })))
+    setStage('review')
+  }
+
   // ── AI Generation ──────────────────────────────────────────────────────
   async function generateAll() {
     if (items.length === 0) return
@@ -209,45 +220,7 @@ export default function BulkUploadPage() {
     setStage('review')
   }
 
-  // ── Save directly (no AI) ──────────────────────────────────────────────
-  async function saveDirectly() {
-    setSaving(true)
-    setSaveError('')
-    const supabase = createClient()
-    let saved = 0
-
-    for (const item of items) {
-      try {
-        const ext = item.file.name.split('.').pop()
-        const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-        const { data: storageData, error: uploadError } = await supabase.storage
-          .from('prompt-images').upload(path, item.file, { cacheControl: '3600', upsert: false })
-        if (uploadError) throw uploadError
-
-        const { data: { publicUrl } } = supabase.storage.from('prompt-images').getPublicUrl(storageData.path)
-
-        const { error: insertError } = await supabase.from('prompts').insert({
-          title: item.title,
-          category_id: globalCategoryId || null,
-          tags: globalTags,
-          image_url: publicUrl,
-          image_prompt: null,
-          motion_prompt: null,
-          video_url: null,
-        })
-        if (insertError) throw insertError
-        saved++
-      } catch (err) {
-        console.error(`[bulk-upload] Failed to save "${item.title}":`, err)
-      }
-    }
-
-    setSavedCount(saved)
-    setSaving(false)
-    setStage('saved')
-  }
-
-  // ── Save after AI review ───────────────────────────────────────────────
+  // ── Save to Supabase ───────────────────────────────────────────────────
   async function saveAll() {
     setSaving(true)
     setSaveError('')
@@ -282,7 +255,8 @@ export default function BulkUploadPage() {
           tags: item.tags,
           image_url: publicUrl,
           image_prompt: item.imagePrompt,
-          motion_prompt: generateMotionPrompts ? (item.motionPrompt || null) : null,
+          // Save motion prompt if: AI is off (user may have typed manually) OR AI is on with motion checked
+          motion_prompt: (!useAI || generateMotionPrompts) ? (item.motionPrompt || null) : null,
           video_url: videoPublicUrl,
         })
         if (insertError) throw insertError
@@ -480,9 +454,6 @@ export default function BulkUploadPage() {
         {/* Action button */}
         {items.length > 0 && (
           <>
-            {saveError && (
-              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 mb-4">{saveError}</div>
-            )}
             {useAI ? (
               <button onClick={generateAll}
                 className="btn-gradient w-full py-4 text-base font-semibold text-white flex items-center justify-center gap-3 shadow-md">
@@ -490,11 +461,10 @@ export default function BulkUploadPage() {
                 Generate {generateMotionPrompts ? 'Image + Motion' : 'Image'} Prompts for {items.length} image{items.length !== 1 ? 's' : ''}
               </button>
             ) : (
-              <button onClick={saveDirectly} disabled={saving}
-                className="btn-gradient w-full py-4 text-base font-semibold text-white flex items-center justify-center gap-3 shadow-md disabled:opacity-60">
-                {saving
-                  ? <><Loader2 className="h-5 w-5 animate-spin" />Saving to library…</>
-                  : <><Save className="h-5 w-5" />Save {items.length} Image{items.length !== 1 ? 's' : ''} to Library</>}
+              <button onClick={goToReview}
+                className="btn-gradient w-full py-4 text-base font-semibold text-white flex items-center justify-center gap-3 shadow-md">
+                <ChevronRight className="h-5 w-5" />
+                Continue — Review {items.length} Image{items.length !== 1 ? 's' : ''}
               </button>
             )}
           </>
@@ -547,9 +517,13 @@ export default function BulkUploadPage() {
       <div className="p-8 max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="font-heading text-3xl font-light text-[#3d2535] mb-1">Review & Edit</h1>
+            <h1 className="font-heading text-3xl font-light text-[#3d2535] mb-1">
+              {useAI ? 'Review & Edit' : 'Review & Add Details'}
+            </h1>
             <p className="text-sm text-[#7a5060]">
-              {items.filter((i) => i.status === 'done').length} of {items.length} generated. Edit any field before saving.
+              {useAI
+                ? `${items.filter((i) => i.status === 'done').length} of ${items.length} generated. Edit any field before saving.`
+                : 'Fill in prompts manually or leave empty for now. You can always edit later from the prompts list.'}
             </p>
           </div>
           <button onClick={() => setStage('upload')}
@@ -604,16 +578,18 @@ export default function BulkUploadPage() {
                     </div>
                   </div>
 
-                  <div className={generateMotionPrompts ? 'col-span-2 sm:col-span-1' : 'col-span-2'}>
+                  {/* Image prompt — half-width when motion prompt column is also shown */}
+                  <div className={(!useAI || generateMotionPrompts) ? 'col-span-2 sm:col-span-1' : 'col-span-2'}>
                     <label className="block text-xs font-medium text-[#7a5060] mb-1">Image Prompt</label>
                     <textarea value={item.imagePrompt}
                       onChange={(e) => updateItem(item.id, { imagePrompt: e.target.value })}
                       rows={5}
-                      placeholder={item.status === 'error' ? 'Generation failed — type manually' : ''}
+                      placeholder={useAI && item.status === 'error' ? 'Generation failed — type manually' : 'Paste or type the image prompt…'}
                       className={`${inputClass} resize-y`} />
                   </div>
 
-                  {generateMotionPrompts && (
+                  {/* Motion prompt — always shown when no AI (user fills manually), or when AI + motion checked */}
+                  {(!useAI || generateMotionPrompts) && (
                     <div className="col-span-2 sm:col-span-1">
                       <label className="block text-xs font-medium text-[#7a5060] mb-1 flex items-center gap-1">
                         <Video className="h-3 w-3 text-[#c9829e]" />
@@ -622,12 +598,13 @@ export default function BulkUploadPage() {
                       <textarea value={item.motionPrompt}
                         onChange={(e) => updateItem(item.id, { motionPrompt: e.target.value })}
                         rows={5}
-                        placeholder={item.status === 'error' ? 'Generation failed — type manually' : ''}
+                        placeholder={useAI && item.status === 'error' ? 'Generation failed — type manually' : 'Paste or type the motion prompt…'}
                         className={`${inputClass} resize-y`} />
                     </div>
                   )}
 
-                  {generateMotionPrompts && item.motionPrompt && (
+                  {/* Video slot — always shown when no AI; when AI, only shown if motion prompt has content */}
+                  {(!useAI || (generateMotionPrompts && item.motionPrompt)) && (
                     <div className="col-span-2">
                       <label className="block text-xs font-medium text-[#7a5060] mb-1.5 flex items-center gap-1">
                         <Video className="h-3 w-3 text-[#c9829e]" />
