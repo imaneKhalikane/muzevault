@@ -6,7 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import {
   Upload, X, Sparkles, Loader2, CheckCircle, AlertCircle,
-  ChevronRight, ArrowLeft, Save, Video,
+  ChevronRight, ArrowLeft, Save, Video, Brain,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { type Category } from '@/lib/types'
@@ -32,7 +32,6 @@ interface ImageEntry {
 // ── Helpers ────────────────────────────────────────────────────────────────
 const TAG_OPTIONS = ['Ad campaign', 'UGC', 'Editorial', 'Portrait', 'Commercial', 'Lifestyle', 'Fashion', 'Beauty']
 
-// Resize to max 1024×1024 and encode as JPEG 0.7 before sending to the API.
 function compressImage(file: File): Promise<{ base64: string; mimeType: string }> {
   return new Promise((resolve) => {
     const img = new window.Image()
@@ -59,7 +58,6 @@ function titleFromFilename(name: string) {
     .replace(/\b\w/g, (c) => c.toUpperCase()).trim()
 }
 
-// Case-insensitive match of Claude's detected category name → category_id
 function detectCategoryId(detectedName: string, cats: Category[]): string {
   if (!detectedName) return ''
   return cats.find((c) => c.name.toLowerCase() === detectedName.toLowerCase())?.id ?? ''
@@ -77,6 +75,7 @@ export default function BulkUploadPage() {
   const [dragging, setDragging] = useState(false)
 
   // Global config
+  const [useAI, setUseAI] = useState(false)
   const [globalCategoryId, setGlobalCategoryId] = useState('')
   const [globalTags, setGlobalTags] = useState<string[]>([])
   const [customTag, setCustomTag] = useState('')
@@ -186,7 +185,6 @@ export default function BulkUploadPage() {
             p.id === item.id ? { ...p, status: 'error', error: data.error ?? 'Generation failed' } : p
           ))
         } else {
-          // Auto-fill title + category from Claude's response
           const detectedCategoryId = detectCategoryId(data.category, categories)
           setItems((prev) => prev.map((p) =>
             p.id === item.id ? {
@@ -211,7 +209,45 @@ export default function BulkUploadPage() {
     setStage('review')
   }
 
-  // ── Save all to Supabase ───────────────────────────────────────────────
+  // ── Save directly (no AI) ──────────────────────────────────────────────
+  async function saveDirectly() {
+    setSaving(true)
+    setSaveError('')
+    const supabase = createClient()
+    let saved = 0
+
+    for (const item of items) {
+      try {
+        const ext = item.file.name.split('.').pop()
+        const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+        const { data: storageData, error: uploadError } = await supabase.storage
+          .from('prompt-images').upload(path, item.file, { cacheControl: '3600', upsert: false })
+        if (uploadError) throw uploadError
+
+        const { data: { publicUrl } } = supabase.storage.from('prompt-images').getPublicUrl(storageData.path)
+
+        const { error: insertError } = await supabase.from('prompts').insert({
+          title: item.title,
+          category_id: globalCategoryId || null,
+          tags: globalTags,
+          image_url: publicUrl,
+          image_prompt: null,
+          motion_prompt: null,
+          video_url: null,
+        })
+        if (insertError) throw insertError
+        saved++
+      } catch (err) {
+        console.error(`[bulk-upload] Failed to save "${item.title}":`, err)
+      }
+    }
+
+    setSavedCount(saved)
+    setSaving(false)
+    setStage('saved')
+  }
+
+  // ── Save after AI review ───────────────────────────────────────────────
   async function saveAll() {
     setSaving(true)
     setSaveError('')
@@ -228,7 +264,6 @@ export default function BulkUploadPage() {
 
         const { data: { publicUrl } } = supabase.storage.from('prompt-images').getPublicUrl(storageData.path)
 
-        // Upload video if one was attached
         let videoPublicUrl: string | null = null
         if (item.videoFile) {
           const vExt = item.videoFile.name.split('.').pop()
@@ -268,16 +303,19 @@ export default function BulkUploadPage() {
       <div className="p-8 max-w-5xl mx-auto">
         <div className="mb-8">
           <h1 className="font-heading text-3xl font-light text-[#3d2535] mb-1">Bulk Upload</h1>
-          <p className="text-sm text-[#7a5060]">Upload multiple images and generate AI prompts for all of them at once.</p>
+          <p className="text-sm text-[#7a5060]">Upload multiple images to your library at once.</p>
         </div>
 
         {/* Step indicator */}
         <div className="flex items-center gap-2 mb-8 text-xs font-medium">
-          {['Upload Images', 'Configure', 'Generate', 'Review & Save'].map((s, i) => (
+          {(useAI
+            ? ['Upload Images', 'Configure', 'Generate', 'Review & Save']
+            : ['Upload Images', 'Configure & Save']
+          ).map((s, i) => (
             <div key={s} className="flex items-center gap-2">
               <span className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold ${i === 0 ? 'bg-[#c9829e] text-white' : 'bg-[#edddd4] text-[#7a5060]'}`}>{i + 1}</span>
               <span className={i === 0 ? 'text-[#3d2535]' : 'text-[#c5adb8]'}>{s}</span>
-              {i < 3 && <ChevronRight className="h-3 w-3 text-[#edddd4]" />}
+              {i < (useAI ? 3 : 1) && <ChevronRight className="h-3 w-3 text-[#edddd4]" />}
             </div>
           ))}
         </div>
@@ -330,43 +368,77 @@ export default function BulkUploadPage() {
           <div className="bg-[#fff0eb] border border-[#edddd4] rounded-2xl p-6 mb-6 space-y-5">
             <div>
               <h2 className="font-heading text-lg font-medium text-[#3d2535]">Configure for all images</h2>
-              <p className="text-xs text-[#7a5060] mt-0.5">These apply to all images. You can edit each one individually after generation.</p>
+              <p className="text-xs text-[#7a5060] mt-0.5">
+                {useAI
+                  ? 'These apply to all images. You can edit each one individually after generation.'
+                  : 'These settings will be applied to all images when saving.'}
+              </p>
             </div>
 
-            {/* Motion prompts checkbox — top of configure */}
-            <label className="flex items-center gap-3 cursor-pointer group w-fit">
-              <div className="relative">
-                <input
-                  type="checkbox"
-                  checked={generateMotionPrompts}
-                  onChange={(e) => setGenerateMotionPrompts(e.target.checked)}
-                  className="sr-only"
-                />
-                <div className={`h-5 w-5 rounded flex items-center justify-center border-2 transition-colors ${
-                  generateMotionPrompts ? 'bg-[#c9829e] border-[#c9829e]' : 'bg-[#fdf8f5] border-[#edddd4] group-hover:border-[#c9829e]'
-                }`}>
-                  {generateMotionPrompts && (
-                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </div>
+            {/* ── MAIN AI TOGGLE ── */}
+            <div
+              className={`flex items-start gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                useAI
+                  ? 'bg-[#c9829e]/8 border-[#c9829e]/40'
+                  : 'bg-[#fdf8f5] border-[#edddd4] hover:border-[#e8b4c8]'
+              }`}
+              onClick={() => setUseAI((v) => !v)}
+            >
+              {/* Toggle pill */}
+              <div className={`relative flex-shrink-0 mt-0.5 h-6 w-11 rounded-full transition-colors duration-200 ${useAI ? 'bg-[#c9829e]' : 'bg-[#d4c4cc]'}`}>
+                <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${useAI ? 'translate-x-5' : 'translate-x-0'}`} />
               </div>
               <div>
-                <span className="text-sm font-medium text-[#3d2535] flex items-center gap-1.5">
-                  <Video className="h-3.5 w-3.5 text-[#c9829e]" />
-                  Generate Motion Prompts
-                </span>
-                <p className="text-xs text-[#7a5060]">
-                  {generateMotionPrompts ? 'Both image and motion prompts will be generated' : 'Only image prompts will be generated'}
+                <p className="text-sm font-semibold text-[#3d2535] flex items-center gap-1.5">
+                  <Brain className={`h-3.5 w-3.5 transition-colors ${useAI ? 'text-[#c9829e]' : 'text-[#c5adb8]'}`} />
+                  Generate content with AI
+                </p>
+                <p className="text-xs text-[#7a5060] mt-0.5 leading-relaxed">
+                  {useAI
+                    ? 'Claude AI will generate title, category, image prompt and motion prompt for each image'
+                    : 'Images will be saved without prompts. You can add prompts manually later.'}
                 </p>
               </div>
-            </label>
+            </div>
 
-            {/* Category — AI will auto-detect, this is the fallback */}
+            {/* Motion prompts checkbox — only when AI is on */}
+            {useAI && (
+              <label className="flex items-center gap-3 cursor-pointer group w-fit">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={generateMotionPrompts}
+                    onChange={(e) => setGenerateMotionPrompts(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`h-5 w-5 rounded flex items-center justify-center border-2 transition-colors ${
+                    generateMotionPrompts ? 'bg-[#c9829e] border-[#c9829e]' : 'bg-[#fdf8f5] border-[#edddd4] group-hover:border-[#c9829e]'
+                  }`}>
+                    {generateMotionPrompts && (
+                      <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-[#3d2535] flex items-center gap-1.5">
+                    <Video className="h-3.5 w-3.5 text-[#c9829e]" />
+                    Generate Motion Prompts
+                  </span>
+                  <p className="text-xs text-[#7a5060]">
+                    {generateMotionPrompts ? 'Both image and motion prompts will be generated' : 'Only image prompts will be generated'}
+                  </p>
+                </div>
+              </label>
+            )}
+
+            {/* Category */}
             <div>
               <label className="block text-sm font-medium text-[#7a5060] mb-2">
-                Fallback Category <span className="text-[#c5adb8] font-normal">(AI will auto-detect per image)</span>
+                {useAI
+                  ? <>Fallback Category <span className="text-[#c5adb8] font-normal">(AI will auto-detect per image)</span></>
+                  : 'Category'}
               </label>
               <select value={globalCategoryId} onChange={(e) => setGlobalCategoryId(e.target.value)} className={inputClass}>
                 <option value="">No category</option>
@@ -405,13 +477,27 @@ export default function BulkUploadPage() {
           </div>
         )}
 
-        {/* Generate button */}
+        {/* Action button */}
         {items.length > 0 && (
-          <button onClick={generateAll}
-            className="btn-gradient w-full py-4 text-base font-semibold text-white flex items-center justify-center gap-3 shadow-md">
-            <Sparkles className="h-5 w-5" />
-            Generate {generateMotionPrompts ? 'Image + Motion' : 'Image'} Prompts for {items.length} image{items.length !== 1 ? 's' : ''}
-          </button>
+          <>
+            {saveError && (
+              <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 mb-4">{saveError}</div>
+            )}
+            {useAI ? (
+              <button onClick={generateAll}
+                className="btn-gradient w-full py-4 text-base font-semibold text-white flex items-center justify-center gap-3 shadow-md">
+                <Sparkles className="h-5 w-5" />
+                Generate {generateMotionPrompts ? 'Image + Motion' : 'Image'} Prompts for {items.length} image{items.length !== 1 ? 's' : ''}
+              </button>
+            ) : (
+              <button onClick={saveDirectly} disabled={saving}
+                className="btn-gradient w-full py-4 text-base font-semibold text-white flex items-center justify-center gap-3 shadow-md disabled:opacity-60">
+                {saving
+                  ? <><Loader2 className="h-5 w-5 animate-spin" />Saving to library…</>
+                  : <><Save className="h-5 w-5" />Save {items.length} Image{items.length !== 1 ? 's' : ''} to Library</>}
+              </button>
+            )}
+          </>
         )}
       </div>
     )
@@ -488,7 +574,6 @@ export default function BulkUploadPage() {
 
                 {/* Fields */}
                 <div className="flex-1 p-5 grid grid-cols-2 gap-4">
-                  {/* Title — pre-filled from AI */}
                   <div className="col-span-2 sm:col-span-1">
                     <label className="block text-xs font-medium text-[#7a5060] mb-1">Title</label>
                     <input type="text" value={item.title}
@@ -496,7 +581,6 @@ export default function BulkUploadPage() {
                       className={inputClass} />
                   </div>
 
-                  {/* Category — pre-selected from AI detection */}
                   <div className="col-span-2 sm:col-span-1">
                     <label className="block text-xs font-medium text-[#7a5060] mb-1">Category</label>
                     <select value={item.categoryId}
@@ -507,7 +591,6 @@ export default function BulkUploadPage() {
                     </select>
                   </div>
 
-                  {/* Tags */}
                   <div className="col-span-2">
                     <label className="block text-xs font-medium text-[#7a5060] mb-1">Tags</label>
                     <div className="flex flex-wrap gap-1.5">
@@ -521,7 +604,6 @@ export default function BulkUploadPage() {
                     </div>
                   </div>
 
-                  {/* Image prompt */}
                   <div className={generateMotionPrompts ? 'col-span-2 sm:col-span-1' : 'col-span-2'}>
                     <label className="block text-xs font-medium text-[#7a5060] mb-1">Image Prompt</label>
                     <textarea value={item.imagePrompt}
@@ -531,7 +613,6 @@ export default function BulkUploadPage() {
                       className={`${inputClass} resize-y`} />
                   </div>
 
-                  {/* Motion prompt — only shown when checkbox is checked */}
                   {generateMotionPrompts && (
                     <div className="col-span-2 sm:col-span-1">
                       <label className="block text-xs font-medium text-[#7a5060] mb-1 flex items-center gap-1">
@@ -546,7 +627,6 @@ export default function BulkUploadPage() {
                     </div>
                   )}
 
-                  {/* Video upload slot — only when motion prompt was generated */}
                   {generateMotionPrompts && item.motionPrompt && (
                     <div className="col-span-2">
                       <label className="block text-xs font-medium text-[#7a5060] mb-1.5 flex items-center gap-1">
@@ -606,7 +686,7 @@ export default function BulkUploadPage() {
           </div>
           <h1 className="font-heading text-4xl font-light text-[#3d2535] mb-3">Done!</h1>
           <p className="text-[#7a5060] text-lg mb-8">
-            {savedCount} prompt{savedCount !== 1 ? 's' : ''} added to your library.
+            {savedCount} image{savedCount !== 1 ? 's' : ''} added to your library.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/admin/prompts"
@@ -614,7 +694,7 @@ export default function BulkUploadPage() {
               <CheckCircle className="h-4 w-4" />View in Prompts
             </Link>
             <button
-              onClick={() => { setItems([]); setGlobalCategoryId(''); setGlobalTags([]); setGenerateMotionPrompts(false); setStage('upload') }}
+              onClick={() => { setItems([]); setGlobalCategoryId(''); setGlobalTags([]); setGenerateMotionPrompts(false); setUseAI(false); setStage('upload') }}
               className="px-8 py-3 rounded-[30px] font-medium border border-[#edddd4] text-[#7a5060] hover:border-[#c9829e] hover:text-[#3d2535] transition-all text-sm">
               Upload More
             </button>
