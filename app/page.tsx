@@ -123,7 +123,7 @@ export default function LandingPage() {
               href="https://www.studiolumai.com/muzevaultorder"
               className="btn-gradient w-full sm:w-auto px-9 py-4 text-base font-semibold text-white shadow-md"
             >
-              Get Access — $39 Lifetime Deal
+              Get Access — $9 Lifetime Deal
             </Link>
             <Link
               href="/login"
@@ -207,7 +207,7 @@ export default function LandingPage() {
             href="https://www.studiolumai.com/muzevaultorder"
             className="inline-block btn-gradient px-12 py-5 text-lg font-semibold text-white shadow-lg"
           >
-            Get Access — $39 Lifetime Deal
+            Get Access — $9 Lifetime Deal
           </Link>
         </div>
       </section>
