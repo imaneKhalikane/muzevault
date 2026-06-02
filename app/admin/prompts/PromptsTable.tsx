@@ -115,15 +115,24 @@ export default function PromptsTable({ prompts }: { prompts: PromptRow[] }) {
     localStorage.setItem('prompts-view', v)
   }
 
+  // ── Category filter ──────────────────────────────────────────────────────
+  const [filterCategory, setFilterCategory] = useState<string>('all')
+
+  const filtered = filterCategory === 'all'
+    ? prompts
+    : filterCategory === 'none'
+      ? prompts.filter((p) => !p.category_id)
+      : prompts.filter((p) => p.category_id === filterCategory)
+
   // ── Selection (all prompts are selectable) ───────────────────────────────
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
-  const allSelected = prompts.length > 0 && prompts.every((p) => selected.has(p.id))
-  const someSelected = prompts.some((p) => selected.has(p.id))
+  const allSelected = filtered.length > 0 && filtered.every((p) => selected.has(p.id))
+  const someSelected = filtered.some((p) => selected.has(p.id))
   const selectedWithoutMotion = prompts.filter((p) => selected.has(p.id) && !p.motion_prompt)
 
   function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(prompts.map((p) => p.id)))
+    setSelected(allSelected ? new Set() : new Set(filtered.map((p) => p.id)))
   }
   function toggleOne(id: string) {
     setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
@@ -235,7 +244,7 @@ export default function PromptsTable({ prompts }: { prompts: PromptRow[] }) {
       {/* ── VIEW TOGGLE + COUNT ─────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-[#7a5060]">
-          {prompts.length} prompt{prompts.length !== 1 ? 's' : ''}
+          {filtered.length}{filtered.length !== prompts.length ? ` of ${prompts.length}` : ''} prompt{filtered.length !== 1 ? 's' : ''}
           {selected.size > 0 && (
             <span className="ml-2 text-[#c9829e] font-medium">· {selected.size} selected</span>
           )}
@@ -262,10 +271,45 @@ export default function PromptsTable({ prompts }: { prompts: PromptRow[] }) {
         </div>
       </div>
 
+      {/* ── CATEGORY FILTER ─────────────────────────────────────────────── */}
+      {categories.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          {[
+            { id: 'all', name: 'All', count: prompts.length },
+            ...categories.map((c) => ({
+              id: c.id,
+              name: c.name,
+              count: prompts.filter((p) => p.category_id === c.id).length,
+            })),
+            { id: 'none', name: 'Uncategorised', count: prompts.filter((p) => !p.category_id).length },
+          ]
+            .filter((f) => f.id === 'all' || f.count > 0)
+            .map((f) => (
+              <button
+                key={f.id}
+                onClick={() => { setFilterCategory(f.id); setSelected(new Set()) }}
+                type="button"
+                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                  filterCategory === f.id
+                    ? 'bg-[#c9829e] border-[#c9829e] text-white shadow-sm'
+                    : 'bg-[#fdf8f5] border-[#edddd4] text-[#7a5060] hover:border-[#c9829e] hover:text-[#3d2535]'
+                }`}
+              >
+                {f.name}
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                  filterCategory === f.id ? 'bg-white/25 text-white' : 'bg-[#edddd4] text-[#7a5060]'
+                }`}>
+                  {f.count}
+                </span>
+              </button>
+            ))}
+        </div>
+      )}
+
       {/* ── LIST VIEW ───────────────────────────────────────────────────── */}
       {view === 'list' && (
         <div className="bg-[#fff0eb] border border-[#edddd4] rounded-2xl overflow-hidden">
-          {prompts.length > 0 ? (
+          {filtered.length > 0 ? (
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#edddd4] text-[#7a5060]">
@@ -285,12 +329,12 @@ export default function PromptsTable({ prompts }: { prompts: PromptRow[] }) {
                 </tr>
               </thead>
               <tbody>
-                {prompts.map((p, i) => {
+                {filtered.map((p, i) => {
                   const isSelected = selected.has(p.id)
                   return (
                     <tr
                       key={p.id}
-                      className={`transition-colors ${i < prompts.length - 1 ? 'border-b border-[#edddd4]/60' : ''} ${isSelected ? 'bg-[#c9829e]/5' : ''}`}
+                      className={`transition-colors ${i < filtered.length - 1 ? 'border-b border-[#edddd4]/60' : ''} ${isSelected ? 'bg-[#c9829e]/5' : ''}`}
                     >
                       <td className="px-4 py-3">
                         <CheckBox checked={isSelected} onChange={() => toggleOne(p.id)} />
@@ -352,7 +396,7 @@ export default function PromptsTable({ prompts }: { prompts: PromptRow[] }) {
       {/* ── GRID VIEW ───────────────────────────────────────────────────── */}
       {view === 'grid' && (
         <>
-          {prompts.length > 0 ? (
+          {filtered.length > 0 ? (
             <>
               {/* Select all bar */}
               <div className="flex items-center gap-3 mb-3 px-1">
@@ -366,7 +410,7 @@ export default function PromptsTable({ prompts }: { prompts: PromptRow[] }) {
                 </span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {prompts.map((p) => {
+                {filtered.map((p) => {
                   const isSelected = selected.has(p.id)
                   return (
                     <div
