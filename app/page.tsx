@@ -2,20 +2,16 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Copy, Sparkles, Zap, ImageIcon, Video, BookOpen, Tag, RefreshCw, Download } from 'lucide-react'
 
-const AVATAR_IMAGES = [
-  '/avatars/2026-04-29 Image OpenArt - 8b24ce84.png',
-  '/avatars/2026-04-29 Image OpenArt - 9738ef80.png',
-  '/avatars/2026-04-29 Image OpenArt - 9edc5f28 (v1).png',
-  '/avatars/2026-04-29 Image OpenArt - a3c3b85b.png',
-  '/avatars/2026-05-07 Image OpenArt - 25dcc78d.png',
-  '/avatars/2026-05-07 Image OpenArt - 5f1e022a.png',
-  '/avatars/2026-05-07 Image OpenArt - 938bebc3.png',
-  '/avatars/2026-05-07 Image OpenArt - dc467a8a.png',
-  '/avatars/openart-ec79c9ee424f4e329c536fef10967e04_raw_1777901070125_be642075 (1).png',
+const HERO_GRID = [
+  '/hero/2026-05-25 Editorial Higgsfield 008.png',
+  '/hero/2026-05-25 Editorial Higgsfield 009.png',
+  '/hero/2026-05-25 Editorial Higgsfield 012.png',
+  '/hero/2026-05-25 Editorial Higgsfield 013.png',
+  '/hero/2026-05-25 Editorial Higgsfield 016.png',
+  '/hero/2026-05-25 Editorial Higgsfield 017.png',
+  '/hero/2026-05-25 Portrait Higgsfield 012.png',
+  '/hero/2026-05-25 Portrait Higgsfield 017.png',
 ]
-
-// Fill 8 slots by cycling through the 9 images
-const HERO_GRID = Array.from({ length: 8 }, (_, i) => AVATAR_IMAGES[i % AVATAR_IMAGES.length])
 
 const HOW_IT_WORKS = [
   {
