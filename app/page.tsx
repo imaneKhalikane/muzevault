@@ -14,8 +14,8 @@ const AVATAR_IMAGES = [
   '/avatars/openart-ec79c9ee424f4e329c536fef10967e04_raw_1777901070125_be642075 (1).png',
 ]
 
-// Fill 12 slots by cycling through the 9 images
-const HERO_GRID = Array.from({ length: 12 }, (_, i) => AVATAR_IMAGES[i % AVATAR_IMAGES.length])
+// Fill 8 slots by cycling through the 9 images
+const HERO_GRID = Array.from({ length: 8 }, (_, i) => AVATAR_IMAGES[i % AVATAR_IMAGES.length])
 
 const HOW_IT_WORKS = [
   {
@@ -75,7 +75,7 @@ export default function LandingPage() {
       {/* ── HERO ── */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
         {/* Avatar image grid */}
-        <div className="absolute inset-0 grid grid-cols-4 grid-rows-3 gap-0.5">
+        <div className="absolute inset-0 grid grid-cols-4 grid-rows-2 gap-0.5">
           {HERO_GRID.map((src, i) => (
             <div key={i} className="relative overflow-hidden">
               <Image
