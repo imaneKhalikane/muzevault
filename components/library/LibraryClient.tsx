@@ -34,19 +34,19 @@ export default function LibraryClient({ categories, prompts }: Props) {
     return prompts.filter((p) => p.category?.slug === activeCategory)
   }, [activeCategory, prompts])
 
-  const bannerImages = prompts.slice(0, 8)
+  const bannerImages = prompts.slice(0, 4)
 
   return (
     <>
       {/* ── BANNER ── */}
-      <div className="relative h-64 overflow-hidden">
-        <div className="absolute inset-0 grid grid-cols-4 grid-rows-2 gap-0.5">
-          {Array.from({ length: 8 }).map((_, i) => {
+      <div className="relative h-[420px] overflow-hidden">
+        <div className="absolute inset-0 grid grid-cols-4 gap-0.5">
+          {Array.from({ length: 4 }).map((_, i) => {
             const bp = bannerImages[i]
             return (
               <div key={i} className="relative overflow-hidden">
                 {bp?.image_url ? (
-                  <Image src={bp.image_url} alt="" fill className="object-cover" sizes="25vw" />
+                  <Image src={bp.image_url} alt="" fill className="object-cover object-top" sizes="25vw" />
                 ) : (
                   <div className={`h-full w-full bg-gradient-to-br ${BANNER_GRADIENTS[i % BANNER_GRADIENTS.length]}`} />
                 )}
