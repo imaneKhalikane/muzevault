@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Copy, Sparkles, Zap, ImageIcon, Video, BookOpen, Tag, RefreshCw, Download } from 'lucide-react'
+import { Copy, Sparkles, Zap, ImageIcon, Video, BookOpen, Tag, RefreshCw, Download, Star, DollarSign, Users, TrendingUp } from 'lucide-react'
 
 const HERO_GRID = [
   '/hero/2026-05-25 Editorial Higgsfield 008.png',
@@ -11,6 +11,52 @@ const HERO_GRID = [
   '/hero/2026-05-25 Editorial Higgsfield 017.png',
   '/hero/2026-05-25 Portrait Higgsfield 012.png',
   '/hero/2026-05-25 Portrait Higgsfield 017.png',
+]
+
+const CAROUSEL_IMAGES = [
+  '/hero/2026-05-25 Editorial Higgsfield 008.png',
+  '/hero/2026-05-25 Editorial Higgsfield 009.png',
+  '/hero/2026-05-25 Editorial Higgsfield 012.png',
+  '/hero/2026-05-25 Editorial Higgsfield 013.png',
+  '/hero/2026-05-25 Editorial Higgsfield 015.png',
+  '/hero/2026-05-25 Editorial Higgsfield 016.png',
+  '/hero/2026-05-25 Editorial Higgsfield 017.png',
+  '/hero/2026-05-25 Editorial Higgsfield 018.png',
+  '/hero/2026-05-25 Portrait Higgsfield 012.png',
+  '/hero/2026-05-25 Portrait Higgsfield 017.png',
+  '/hero/2026-05-25 Travel Higgsfield 025.png',
+  '/hero/hf_20260602_092513_d48fbe36-bb9a-4df1-acbb-6bb1b99ac558.png',
+]
+
+const TESTIMONIALS = [
+  {
+    name: 'Camille R.',
+    role: 'UGC Creator · 42k followers',
+    avatar: 'C',
+    text: "I was spending hours trying to write prompts from scratch. Solène's vault changed everything — I generated 3 avatars in 20 minutes and they all looked like proper editorial shoots.",
+    stars: 5,
+  },
+  {
+    name: 'Maya T.',
+    role: 'Content Strategist',
+    avatar: 'M',
+    text: 'The motion prompts are what got me. My talking-head videos now look like they were directed by someone. No camera, no crew — just the vault and an AI tool.',
+    stars: 5,
+  },
+  {
+    name: 'Léa D.',
+    role: 'AI Entrepreneur · 28k followers',
+    avatar: 'L',
+    text: "Worth every cent. I've tried other prompt packs but nothing comes close to the quality and variety here. The editorial category alone is gold.",
+    stars: 5,
+  },
+  {
+    name: 'Sophia K.',
+    role: 'Brand Consultant',
+    avatar: 'S',
+    text: "Finally a product built by someone who actually creates content. You can tell every prompt was tested and refined. My AI brand looks cohesive and professional.",
+    stars: 5,
+  },
 ]
 
 const HOW_IT_WORKS = [
@@ -160,6 +206,29 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── CAROUSEL ── */}
+      <section className="py-16 bg-[#fdf8f5] overflow-hidden">
+        <div className="text-center mb-10">
+          <p className="site-subtitle mb-2">From the vault</p>
+          <h2 className="font-heading text-3xl md:text-4xl font-light text-[#3d2535]">
+            Latest AI Avatars
+          </h2>
+        </div>
+        <div className="relative overflow-hidden">
+          {/* Fade edges */}
+          <div className="absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none bg-gradient-to-r from-[#fdf8f5] to-transparent" />
+          <div className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none bg-gradient-to-l from-[#fdf8f5] to-transparent" />
+          <div className="flex animate-marquee gap-3" style={{ width: 'max-content' }}>
+            {[...CAROUSEL_IMAGES, ...CAROUSEL_IMAGES].map((src, i) => (
+              <div key={i} className="relative flex-shrink-0 w-[220px] h-[310px] rounded-2xl overflow-hidden shadow-sm">
+                <Image src={src} alt="" fill className="object-cover object-top" sizes="220px" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#3d2535]/20 to-transparent" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── WHAT'S INSIDE ── */}
       <section className="py-24 px-6 bg-[#fff0eb]">
         <div className="mx-auto max-w-6xl">
@@ -181,6 +250,89 @@ export default function LandingPage() {
                 <div>
                   <h3 className="font-medium text-[#3d2535] mb-1">{title}</h3>
                   <p className="text-sm text-[#7a5060] font-light">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── COMMISSION ── */}
+      <section className="py-24 px-6 bg-[#3d2535] overflow-hidden relative">
+        {/* Decorative blobs */}
+        <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #c9829e, transparent)' }} />
+        <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #d4a574, transparent)' }} />
+
+        <div className="mx-auto max-w-5xl relative z-10">
+          <div className="text-center mb-14">
+            <p className="site-subtitle text-[#c9829e] mb-3">Affiliate Program</p>
+            <h2 className="font-heading text-4xl md:text-5xl font-light text-white mb-4">
+              Earn <span className="gradient-text">60% commission</span><br />on every sale you refer
+            </h2>
+            <p className="text-white/60 font-light max-w-xl mx-auto">
+              Share your unique link. When someone buys through you, you keep 60% — automatically paid out. No cap, no minimum.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-5 mb-12">
+            {[
+              { icon: DollarSign, value: '$23.40', label: 'Per sale you refer', sub: '60% of $39' },
+              { icon: Users, value: 'Unlimited', label: 'Referrals allowed', sub: 'No cap, ever' },
+              { icon: TrendingUp, value: 'Instant', label: 'Payout per conversion', sub: 'Automated payouts' },
+            ].map(({ icon: Icon, value, label, sub }) => (
+              <div key={label} className="bg-white/5 border border-white/10 rounded-2xl p-7 text-center hover:bg-white/10 transition-colors">
+                <div className="h-11 w-11 rounded-xl bg-[#c9829e]/20 flex items-center justify-center mx-auto mb-4">
+                  <Icon className="h-5 w-5 text-[#c9829e]" />
+                </div>
+                <p className="font-heading text-3xl font-light text-white mb-1">{value}</p>
+                <p className="text-sm font-medium text-white/80">{label}</p>
+                <p className="text-xs text-white/40 mt-0.5">{sub}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Link
+              href="https://www.studiolumai.com/muzevaultorder"
+              className="inline-flex items-center gap-2 btn-gradient px-8 py-4 text-base font-semibold text-white shadow-lg"
+            >
+              <Sparkles className="h-4 w-4" />
+              Become an Affiliate
+            </Link>
+            <p className="text-white/40 text-sm mt-4 font-light">Free to join · Instant approval</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ── */}
+      <section className="py-24 px-6 bg-[#fff0eb]">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center mb-14">
+            <p className="site-subtitle mb-2">What creators say</p>
+            <h2 className="font-heading text-4xl md:text-5xl font-light text-[#3d2535]">
+              Real results, real creators
+            </h2>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {TESTIMONIALS.map(({ name, role, avatar, text, stars }) => (
+              <div key={name} className="bg-[#fdf8f5] border border-[#edddd4] rounded-2xl p-6 flex flex-col gap-4 hover:border-[#e8b4c8] transition-colors">
+                {/* Stars */}
+                <div className="flex gap-0.5">
+                  {Array.from({ length: stars }).map((_, i) => (
+                    <Star key={i} className="h-3.5 w-3.5 fill-[#c9829e] text-[#c9829e]" />
+                  ))}
+                </div>
+                {/* Quote */}
+                <p className="text-sm text-[#7a5060] leading-relaxed font-light flex-1">&ldquo;{text}&rdquo;</p>
+                {/* Author */}
+                <div className="flex items-center gap-3 pt-2 border-t border-[#edddd4]">
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#c9829e] to-[#d4a574] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                    {avatar}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#3d2535]">{name}</p>
+                    <p className="text-xs text-[#c5adb8]">{role}</p>
+                  </div>
                 </div>
               </div>
             ))}
