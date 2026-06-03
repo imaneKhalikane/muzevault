@@ -34,25 +34,23 @@ export default function LibraryClient({ categories, prompts }: Props) {
     return prompts.filter((p) => p.category?.slug === activeCategory)
   }, [activeCategory, prompts])
 
-  const bannerImages = prompts.slice(0, 4)
+  const FIXED_BANNER = [
+    '/hero/2026-05-25 Editorial Higgsfield 015.png',
+    '/hero/2026-05-25 Editorial Higgsfield 018.png',
+    '/hero/2026-05-25 Travel Higgsfield 025.png',
+    '/hero/hf_20260602_092513_d48fbe36-bb9a-4df1-acbb-6bb1b99ac558.png',
+  ]
 
   return (
     <>
       {/* ── BANNER ── */}
       <div className="relative h-[420px] overflow-hidden">
         <div className="absolute inset-0 grid grid-cols-4 gap-0.5">
-          {Array.from({ length: 4 }).map((_, i) => {
-            const bp = bannerImages[i]
-            return (
-              <div key={i} className="relative overflow-hidden">
-                {bp?.image_url ? (
-                  <Image src={bp.image_url} alt="" fill className="object-cover object-top" sizes="25vw" />
-                ) : (
-                  <div className={`h-full w-full bg-gradient-to-br ${BANNER_GRADIENTS[i % BANNER_GRADIENTS.length]}`} />
-                )}
-              </div>
-            )
-          })}
+          {FIXED_BANNER.map((src, i) => (
+            <div key={i} className="relative overflow-hidden">
+              <Image src={src} alt="" fill className="object-cover object-top" sizes="25vw" />
+            </div>
+          ))}
         </div>
 
         {/* Fade to background */}
