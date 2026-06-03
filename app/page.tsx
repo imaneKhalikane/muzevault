@@ -133,7 +133,7 @@ export default function LandingPage() {
                 className="absolute inset-0"
                 style={{
                   background:
-                    'linear-gradient(to bottom, rgba(201,130,158,0.5) 0%, rgba(61,37,53,0.7) 100%)',
+                    'linear-gradient(to bottom, rgba(61,37,53,0.55) 0%, rgba(61,37,53,0.85) 100%)',
                 }}
               />
             </div>
@@ -148,14 +148,14 @@ export default function LandingPage() {
             AI Creator Vault
           </div>
 
-          <h1 className="font-heading text-6xl md:text-8xl font-light tracking-tight leading-[1.05] text-white mb-4 drop-shadow-md">
+          <h1 className="font-heading text-6xl md:text-8xl font-light tracking-tight leading-[1.05] text-white mb-4 drop-shadow-2xl" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}>
             Prompt like a director.
           </h1>
-          <h1 className="font-heading text-6xl md:text-8xl font-light tracking-tight leading-[1.05] mb-8 drop-shadow-md">
+          <h1 className="font-heading text-6xl md:text-8xl font-light tracking-tight leading-[1.05] mb-8 drop-shadow-2xl" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.3)' }}>
             <span className="gradient-text">Create like a visionary.</span>
           </h1>
 
-          <p className="text-base md:text-lg text-white/80 max-w-xl mx-auto mb-10 leading-relaxed font-light">
+          <p className="text-base md:text-lg text-white/90 max-w-xl mx-auto mb-10 leading-relaxed font-light" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.3)' }}>
             Unlock a curated vault of AI avatar image prompts and motion prompts — everything you
             need to create professional talking-head videos without a camera.
           </p>
