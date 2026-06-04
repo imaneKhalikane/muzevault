@@ -220,7 +220,7 @@ export default function BulkUploadPage() {
     setStage('review')
   }
 
-  // ── Save to Supabase ───────────────────────────────────────────────────
+  // ── Save to Supabase (DB) + R2 (files) ────────────────────────────────
   async function saveAll() {
     setSaving(true)
     setSaveError('')
@@ -229,26 +229,25 @@ export default function BulkUploadPage() {
 
     for (const item of items) {
       try {
-        const ext = item.file.name.split('.').pop()
-        const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-        const { data: storageData, error: uploadError } = await supabase.storage
-          .from('prompt-images').upload(path, item.file, { cacheControl: '3600', upsert: false })
-        if (uploadError) throw uploadError
+        // Upload image to R2
+        const imgForm = new FormData()
+        imgForm.append('file', item.file)
+        const imgRes = await fetch('/api/upload-image', { method: 'POST', body: imgForm })
+        const imgData = await imgRes.json()
+        if (!imgRes.ok || imgData.error) throw new Error(imgData.error ?? 'Image upload failed')
+        const publicUrl: string = imgData.url
 
-        const { data: { publicUrl } } = supabase.storage.from('prompt-images').getPublicUrl(storageData.path)
-
+        // Upload video to R2 (optional)
         let videoPublicUrl: string | null = null
         if (item.videoFile) {
-          const vExt = item.videoFile.name.split('.').pop()
-          const vPath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${vExt}`
-          const { data: vData, error: vErr } = await supabase.storage
-            .from('prompt-videos').upload(vPath, item.videoFile, { cacheControl: '3600', upsert: false })
-          if (!vErr && vData) {
-            const { data: { publicUrl: vUrl } } = supabase.storage.from('prompt-videos').getPublicUrl(vData.path)
-            videoPublicUrl = vUrl
-          }
+          const vidForm = new FormData()
+          vidForm.append('file', item.videoFile)
+          const vidRes = await fetch('/api/upload-video', { method: 'POST', body: vidForm })
+          const vidData = await vidRes.json()
+          if (vidRes.ok && !vidData.error) videoPublicUrl = vidData.url
         }
 
+        // Insert into Supabase DB
         const { error: insertError } = await supabase.from('prompts').insert({
           title: item.title,
           category_id: item.categoryId || null,

@@ -3,7 +3,6 @@
 import { useState, useRef } from 'react'
 import Image from 'next/image'
 import { Upload, X, Loader2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 
 interface Props {
   value: string
@@ -21,13 +20,12 @@ export default function ImageUpload({ value, onChange }: Props) {
     setError('')
     setUploading(true)
     try {
-      const supabase = createClient()
-      const ext = file.name.split('.').pop()
-      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      const { data, error: uploadError } = await supabase.storage.from('prompt-images').upload(path, file, { cacheControl: '3600', upsert: false })
-      if (uploadError) throw uploadError
-      const { data: { publicUrl } } = supabase.storage.from('prompt-images').getPublicUrl(data.path)
-      onChange(publicUrl)
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/upload-image', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (!res.ok || data.error) throw new Error(data.error ?? 'Upload failed')
+      onChange(data.url)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Upload failed. Please try again.')
     } finally {

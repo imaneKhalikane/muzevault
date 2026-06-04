@@ -45,15 +45,12 @@ export default function PromptForm({ categories, prompt }: Props) {
     if (!file) return
     setVideoUploading(true)
     try {
-      const supabase = createClient()
-      const ext = file.name.split('.').pop()
-      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      const { data, error: uploadErr } = await supabase.storage
-        .from('prompt-videos')
-        .upload(path, file, { cacheControl: '3600', upsert: false })
-      if (uploadErr) throw uploadErr
-      const { data: { publicUrl } } = supabase.storage.from('prompt-videos').getPublicUrl(data.path)
-      setVideoUrl(publicUrl)
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/upload-video', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (!res.ok || data.error) throw new Error(data.error ?? 'Upload failed')
+      setVideoUrl(data.url)
     } catch (err) {
       console.error('[video-upload]', err)
       setError('Video upload failed. Please try again.')
