@@ -22,6 +22,9 @@ export async function POST(req: NextRequest) {
     const presignedUrl = await getSignedUrl(r2Client, command, { expiresIn: 3600 })
     const publicUrl = `${R2_PUBLIC_URL}/${key}`
 
+    console.log('[r2-presign] Generated key:', key)
+    console.log('[r2-presign] Public URL:', publicUrl)
+
     return NextResponse.json({ presignedUrl, publicUrl, key })
   } catch (err) {
     console.error('[r2-presign]', err)

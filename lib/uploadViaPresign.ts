@@ -9,7 +9,7 @@ export async function uploadViaPresign(file: File): Promise<string> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fileName: file.name, contentType: file.type }),
   })
-  const { presignedUrl, publicUrl, error } = await res.json()
+  const { presignedUrl, publicUrl, key, error } = await res.json()
   if (!res.ok || error) throw new Error(error ?? 'Failed to get upload URL')
 
   // Step 2: PUT the file directly to R2 — bypasses Vercel entirely
@@ -18,7 +18,10 @@ export async function uploadViaPresign(file: File): Promise<string> {
     body: file,
     headers: { 'Content-Type': file.type },
   })
-  if (!uploadRes.ok) throw new Error(`R2 upload failed: ${uploadRes.status}`)
+  if (!uploadRes.ok) throw new Error(`R2 upload failed: ${uploadRes.status} ${await uploadRes.text()}`)
+
+  console.log('Uploaded to R2 with key:', key)
+  console.log('R2 public URL to save:', publicUrl)
 
   // Step 3: Return the permanent public URL
   return publicUrl
