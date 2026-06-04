@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2, Video, CheckCircle, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { type Category, type Prompt } from '@/lib/types'
+import { uploadViaPresign } from '@/lib/uploadViaPresign'
 import ImageUpload from './ImageUpload'
 
 const TAG_OPTIONS = ['Ad campaign', 'UGC', 'Editorial', 'Portrait', 'Commercial', 'Lifestyle', 'Fashion', 'Beauty']
@@ -45,12 +46,8 @@ export default function PromptForm({ categories, prompt }: Props) {
     if (!file) return
     setVideoUploading(true)
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const res = await fetch('/api/upload-video', { method: 'POST', body: formData })
-      const data = await res.json()
-      if (!res.ok || data.error) throw new Error(data.error ?? 'Upload failed')
-      setVideoUrl(data.url)
+      const url = await uploadViaPresign(file)
+      setVideoUrl(url)
     } catch (err) {
       console.error('[video-upload]', err)
       setError('Video upload failed. Please try again.')

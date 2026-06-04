@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { type Category } from '@/lib/types'
+import { uploadViaPresign } from '@/lib/uploadViaPresign'
 
 // ── Types ─────────────────────────────────────────────────────────────────
 type Stage = 'upload' | 'generating' | 'review' | 'saved'
@@ -220,7 +221,7 @@ export default function BulkUploadPage() {
     setStage('review')
   }
 
-  // ── Save to Supabase (DB) + R2 (files) ────────────────────────────────
+  // ── Save to Supabase (DB) + R2 (files via presigned URL) ─────────────
   async function saveAll() {
     setSaving(true)
     setSaveError('')
@@ -229,22 +230,17 @@ export default function BulkUploadPage() {
 
     for (const item of items) {
       try {
-        // Upload image to R2
-        const imgForm = new FormData()
-        imgForm.append('file', item.file)
-        const imgRes = await fetch('/api/upload-image', { method: 'POST', body: imgForm })
-        const imgData = await imgRes.json()
-        if (!imgRes.ok || imgData.error) throw new Error(imgData.error ?? 'Image upload failed')
-        const publicUrl: string = imgData.url
+        // Upload image directly to R2 from browser (no Vercel size limit)
+        const publicUrl = await uploadViaPresign(item.file)
 
-        // Upload video to R2 (optional)
+        // Upload video directly to R2 (optional)
         let videoPublicUrl: string | null = null
         if (item.videoFile) {
-          const vidForm = new FormData()
-          vidForm.append('file', item.videoFile)
-          const vidRes = await fetch('/api/upload-video', { method: 'POST', body: vidForm })
-          const vidData = await vidRes.json()
-          if (vidRes.ok && !vidData.error) videoPublicUrl = vidData.url
+          try {
+            videoPublicUrl = await uploadViaPresign(item.videoFile)
+          } catch (err) {
+            console.error('[bulk-upload] Video upload failed, continuing without video:', err)
+          }
         }
 
         // Insert into Supabase DB

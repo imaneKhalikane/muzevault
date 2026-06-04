@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import Image from 'next/image'
 import { Upload, X, Loader2 } from 'lucide-react'
+import { uploadViaPresign } from '@/lib/uploadViaPresign'
 
 interface Props {
   value: string
@@ -20,12 +21,8 @@ export default function ImageUpload({ value, onChange }: Props) {
     setError('')
     setUploading(true)
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const res = await fetch('/api/upload-image', { method: 'POST', body: formData })
-      const data = await res.json()
-      if (!res.ok || data.error) throw new Error(data.error ?? 'Upload failed')
-      onChange(data.url)
+      const url = await uploadViaPresign(file)
+      onChange(url)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Upload failed. Please try again.')
     } finally {
