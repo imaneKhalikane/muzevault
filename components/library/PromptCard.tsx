@@ -20,7 +20,7 @@ export default function PromptCard({ prompt, onClick }: Props) {
           src={prompt.image_url}
           alt={prompt.title}
           fill
-          className="object-cover"
+          className="object-contain"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         />
       ) : (
