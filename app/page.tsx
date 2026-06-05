@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Copy, Sparkles, Zap, ImageIcon, Video, BookOpen, Tag, RefreshCw, Download, Star, DollarSign, Users, TrendingUp } from 'lucide-react'
+import { createClient } from '@/lib/supabase/server'
 
 const HERO_GRID = [
   '/hero/2026-05-25 Editorial Higgsfield 008.png',
@@ -79,17 +80,23 @@ const HOW_IT_WORKS = [
   },
 ]
 
-const FEATURES = [
-  { icon: ImageIcon, title: '100+ Image Prompts', desc: 'Hand-crafted prompts for stunning AI avatars' },
-  { icon: Video, title: 'Motion Prompts', desc: 'Paired animation prompts for every image' },
-  { icon: Tag, title: 'Tagged & Categorised', desc: 'Filter by Ad campaign, UGC, Editorial & more' },
-  { icon: BookOpen, title: 'New Prompts Weekly', desc: 'Fresh content added every week' },
-  { icon: RefreshCw, title: 'Multi-Style Library', desc: 'Portraits, editorial, commercial & more' },
-  { icon: Download, title: 'Lifetime Access', desc: 'One payment — yours forever' },
-]
-
-export default function LandingPage() {
+export default async function LandingPage() {
   const stanUrl = process.env.NEXT_PUBLIC_STAN_STORE_URL || '#'
+
+  // Fetch live prompt count and round down to nearest 100
+  const supabase = createClient()
+  const { count } = await supabase.from('prompts').select('*', { count: 'exact', head: true })
+  const promptCount = count ?? 0
+  const promptLabel = `${Math.floor(promptCount / 100) * 100}+ Image Prompts`
+
+  const FEATURES = [
+    { icon: ImageIcon, title: promptLabel, desc: 'Hand-crafted prompts for stunning AI avatars' },
+    { icon: Video, title: 'Motion Prompts', desc: 'Paired animation prompts for every image' },
+    { icon: Tag, title: 'Tagged & Categorised', desc: 'Filter by Ad campaign, UGC, Editorial & more' },
+    { icon: BookOpen, title: 'New Prompts Weekly', desc: 'Fresh content added every week' },
+    { icon: RefreshCw, title: 'Multi-Style Library', desc: 'Portraits, editorial, commercial & more' },
+    { icon: Download, title: 'Lifetime Access', desc: 'One payment — yours forever' },
+  ]
 
   return (
     <div className="min-h-screen bg-[#fdf8f5]">
