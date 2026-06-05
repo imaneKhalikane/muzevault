@@ -117,12 +117,17 @@ export default function PromptsTable({ prompts }: { prompts: PromptRow[] }) {
 
   // ── Category filter ──────────────────────────────────────────────────────
   const [filterCategory, setFilterCategory] = useState<string>('all')
+  const [filterMotion, setFilterMotion] = useState(false)
 
-  const filtered = filterCategory === 'all'
-    ? prompts
-    : filterCategory === 'none'
-      ? prompts.filter((p) => !p.category_id)
-      : prompts.filter((p) => p.category_id === filterCategory)
+  const filtered = (() => {
+    let result = filterCategory === 'all'
+      ? prompts
+      : filterCategory === 'none'
+        ? prompts.filter((p) => !p.category_id)
+        : prompts.filter((p) => p.category_id === filterCategory)
+    if (filterMotion) result = result.filter((p) => !!p.motion_prompt)
+    return result
+  })()
 
   // ── Selection (all prompts are selectable) ───────────────────────────────
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -303,6 +308,20 @@ export default function PromptsTable({ prompts }: { prompts: PromptRow[] }) {
                 </span>
               </button>
             ))}
+
+          {/* Motion toggle */}
+          <button
+            type="button"
+            onClick={() => { setFilterMotion((v) => !v); setSelected(new Set()) }}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all ${
+              filterMotion
+                ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm'
+                : 'bg-[#fdf8f5] border-[#edddd4] text-[#7a5060] hover:border-emerald-400 hover:text-emerald-600'
+            }`}
+          >
+            <Video className="h-3 w-3" />
+            Motion only
+          </button>
         </div>
       )}
 

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Image from 'next/image'
-import { Instagram } from 'lucide-react'
+import { Instagram, Video } from 'lucide-react'
 import { type Category, type Prompt } from '@/lib/types'
 import CategoryFilter from './CategoryFilter'
 import PromptCard from './PromptCard'
@@ -27,12 +27,16 @@ const BANNER_GRADIENTS = [
 
 export default function LibraryClient({ categories, prompts }: Props) {
   const [activeCategory, setActiveCategory] = useState('all')
+  const [filterMotion, setFilterMotion] = useState(false)
   const [modalIndex, setModalIndex] = useState<number | null>(null)
 
   const filtered = useMemo(() => {
-    if (activeCategory === 'all') return prompts
-    return prompts.filter((p) => p.category?.slug === activeCategory)
-  }, [activeCategory, prompts])
+    let result = activeCategory === 'all'
+      ? prompts
+      : prompts.filter((p) => p.category?.slug === activeCategory)
+    if (filterMotion) result = result.filter((p) => !!p.motion_prompt)
+    return result
+  }, [activeCategory, filterMotion, prompts])
 
   const FIXED_BANNER = [
     '/hero/2026-05-25 Editorial Higgsfield 015.png',
@@ -83,8 +87,22 @@ export default function LibraryClient({ categories, prompts }: Props) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
         <OnboardingTooltip />
 
-        <div className="mb-8">
+        <div className="mb-8 space-y-3">
           <CategoryFilter categories={categories} active={activeCategory} onChange={(slug) => { setActiveCategory(slug); setModalIndex(null) }} />
+          <div>
+            <button
+              type="button"
+              onClick={() => { setFilterMotion((v) => !v); setModalIndex(null) }}
+              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-[30px] text-sm font-medium transition-all border ${
+                filterMotion
+                  ? 'bg-emerald-500 border-emerald-500 text-white shadow-sm'
+                  : 'bg-transparent border-[#edddd4] text-[#7a5060] hover:border-emerald-400 hover:text-emerald-600'
+              }`}
+            >
+              <Video className="h-3.5 w-3.5" />
+              Motion only
+            </button>
+          </div>
         </div>
 
         {filtered.length === 0 ? (
