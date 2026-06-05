@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { Copy, Sparkles, Zap, ImageIcon, Video, BookOpen, Tag, RefreshCw, Download, Star, DollarSign, Users, TrendingUp } from 'lucide-react'
 
 const HERO_GRID = [
@@ -120,14 +119,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 grid grid-cols-4 grid-rows-2 gap-0.5">
           {HERO_GRID.map((src, i) => (
             <div key={i} className="relative overflow-hidden">
-              <Image
-                src={src}
-                alt=""
-                fill
-                className="object-cover object-top"
-                sizes="25vw"
-                priority={i < 4}
-              />
+              <img src={src} alt="" className="absolute inset-0 w-full h-full object-cover object-top" />
               {/* Per-cell brand gradient overlay */}
               <div
                 className="absolute inset-0"
@@ -221,7 +213,7 @@ export default function LandingPage() {
           <div className="flex animate-marquee gap-3" style={{ width: 'max-content' }}>
             {[...CAROUSEL_IMAGES, ...CAROUSEL_IMAGES].map((src, i) => (
               <div key={i} className="relative flex-shrink-0 w-[220px] h-[310px] rounded-2xl overflow-hidden shadow-sm">
-                <Image src={src} alt="" fill className="object-cover object-top" sizes="220px" />
+                <img src={src} alt="" className="absolute inset-0 w-full h-full object-cover object-top" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#3d2535]/20 to-transparent" />
               </div>
             ))}

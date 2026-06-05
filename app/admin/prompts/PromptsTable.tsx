@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import {
   Pencil, Video, CheckCircle, Loader2, X,
@@ -362,7 +361,7 @@ export default function PromptsTable({ prompts }: { prompts: PromptRow[] }) {
                         <div className="flex items-center gap-3">
                           <div className="relative h-12 w-12 rounded-lg overflow-hidden bg-[#fde8de] flex-shrink-0">
                             {p.image_url
-                              ? <Image src={p.image_url} alt={p.title} fill className="object-cover" />
+                              ? <img src={p.image_url} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
                               : <span className="flex h-full w-full items-center justify-center text-xl">🎭</span>}
                           </div>
                           <span className="font-medium text-[#3d2535] truncate max-w-[150px]">{p.title}</span>
@@ -441,7 +440,7 @@ export default function PromptsTable({ prompts }: { prompts: PromptRow[] }) {
                       {/* Image */}
                       <div className="relative aspect-square bg-[#fde8de]">
                         {p.image_url
-                          ? <Image src={p.image_url} alt={p.title} fill className="object-cover" />
+                          ? <img src={p.image_url} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
                           : <span className="flex h-full w-full items-center justify-center text-4xl">🎭</span>}
 
                         {/* Checkbox overlay — top left */}
@@ -560,7 +559,7 @@ export default function PromptsTable({ prompts }: { prompts: PromptRow[] }) {
             {currentItem && (
               <div className="flex items-center gap-4 bg-[#fff0eb] border border-[#edddd4] rounded-xl p-3 text-left">
                 <div className="relative h-14 w-14 rounded-lg overflow-hidden flex-shrink-0 bg-[#fde8de]">
-                  {currentItem.image_url && <Image src={currentItem.image_url} alt={currentItem.title} fill className="object-cover" />}
+                  {currentItem.image_url && <img src={currentItem.image_url} alt={currentItem.title} className="absolute inset-0 w-full h-full object-cover" />}
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-[#7a5060] mb-0.5">Processing</p>
@@ -594,7 +593,7 @@ export default function PromptsTable({ prompts }: { prompts: PromptRow[] }) {
                   className={`border rounded-xl overflow-hidden transition-opacity ${result.include ? 'border-[#edddd4]' : 'border-[#edddd4]/40 opacity-50'}`}>
                   <div className="flex gap-0">
                     <div className="relative w-28 shrink-0 min-h-[120px] bg-[#fde8de]">
-                      {result.prompt.image_url && <Image src={result.prompt.image_url} alt={result.prompt.title} fill className="object-cover" />}
+                      {result.prompt.image_url && <img src={result.prompt.image_url} alt={result.prompt.title} className="absolute inset-0 w-full h-full object-cover" />}
                       <button
                         onClick={() => !result.error && updateResult(result.prompt.id, { include: !result.include })}
                         disabled={!!result.error}

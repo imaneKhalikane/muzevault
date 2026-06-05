@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight, Copy, Check, ChevronDown, Play, Pause } from 'lucide-react'
 import { type Prompt } from '@/lib/types'
 import clsx from 'clsx'
@@ -106,12 +105,10 @@ export default function PromptModal({ prompts, initialIndex, onClose }: Props) {
               showVideoInPanel ? 'opacity-0 pointer-events-none' : 'opacity-100'
             )}>
               {prompt.image_url ? (
-                <Image
+                <img
                   src={prompt.image_url}
                   alt={prompt.title}
-                  fill
-                  className="object-contain"
-                  sizes="(max-width: 768px) 90vw, 54vw"
+                  className="absolute inset-0 w-full h-full object-contain"
                 />
               ) : (
                 <div className="absolute inset-0 bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center">

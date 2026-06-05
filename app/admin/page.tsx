@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import Image from 'next/image'
 import { FileText, Tag, Clock } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -60,7 +59,7 @@ export default async function AdminDashboard() {
                       <div className="flex items-center gap-3">
                         <div className="relative h-10 w-10 rounded-lg overflow-hidden bg-[#fde8de] flex-shrink-0">
                           {p.image_url ? (
-                            <Image src={p.image_url} alt={p.title} fill className="object-cover" />
+                            <img src={p.image_url} alt={p.title} className="absolute inset-0 w-full h-full object-cover" />
                           ) : (
                             <span className="flex h-full w-full items-center justify-center text-lg">🎭</span>
                           )}

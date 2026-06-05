@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { type Prompt } from '@/lib/types'
 
 interface Props {
@@ -16,12 +15,10 @@ export default function PromptCard({ prompt, onClick }: Props) {
     >
       {/* Image */}
       {prompt.image_url ? (
-        <Image
+        <img
           src={prompt.image_url}
           alt={prompt.title}
-          fill
-          className="object-contain"
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className="absolute inset-0 w-full h-full object-contain"
         />
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-rose-100 to-pink-100 flex items-center justify-center">

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import Image from 'next/image'
 import { Upload, X, Loader2 } from 'lucide-react'
 import { uploadViaPresign } from '@/lib/uploadViaPresign'
 
@@ -53,13 +52,7 @@ export default function ImageUpload({ value, onChange }: Props) {
     <div>
       {displaySrc ? (
         <div className="relative h-48 rounded-xl overflow-hidden border border-[#edddd4] group">
-          {/* Use regular <img> for blob URLs, Next Image for remote URLs */}
-          {localPreview ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={displaySrc} alt="Uploaded" className="w-full h-full object-cover" />
-          ) : (
-            <Image src={displaySrc} alt="Uploaded" fill className="object-cover" />
-          )}
+          <img src={displaySrc} alt="Uploaded" className="w-full h-full object-cover" />
 
           {/* Uploading indicator overlay */}
           {uploading && (

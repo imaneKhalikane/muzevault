@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import {
   Upload, X, Sparkles, Loader2, CheckCircle, AlertCircle,
@@ -318,7 +317,7 @@ export default function BulkUploadPage() {
             <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
               {items.map((item) => (
                 <div key={item.id} className="relative group rounded-xl overflow-hidden border border-[#edddd4] aspect-square">
-                  <Image src={item.preview} alt={item.title} fill className="object-cover" />
+                  <img src={item.preview} alt={item.title} className="absolute inset-0 w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-[#3d2535]/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 p-1">
                     <p className="text-white text-[10px] font-medium text-center leading-tight line-clamp-2">{item.file.name}</p>
                     <button onClick={(e) => { e.stopPropagation(); removeItem(item.id) }}
@@ -493,7 +492,7 @@ export default function BulkUploadPage() {
         <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
           {items.map((item) => (
             <div key={item.id} className="relative rounded-xl overflow-hidden aspect-square border border-[#edddd4]">
-              <Image src={item.preview} alt={item.title} fill className="object-cover" />
+              <img src={item.preview} alt={item.title} className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 flex items-center justify-center">
                 {item.status === 'generating' && <div className="bg-[#3d2535]/70 rounded-full p-1.5"><Loader2 className="h-4 w-4 text-white animate-spin" /></div>}
                 {item.status === 'done' && <div className="bg-emerald-500/80 rounded-full p-1.5"><CheckCircle className="h-4 w-4 text-white" /></div>}
@@ -533,7 +532,7 @@ export default function BulkUploadPage() {
               <div className="flex gap-0">
                 {/* Thumbnail */}
                 <div className="relative w-40 shrink-0 self-stretch min-h-[200px]">
-                  <Image src={item.preview} alt={item.title} fill className="object-cover" />
+                  <img src={item.preview} alt={item.title} className="absolute inset-0 w-full h-full object-cover" />
                   {item.status === 'error' && (
                     <div className="absolute inset-0 bg-red-500/20 flex items-end p-2">
                       <span className="text-[10px] text-red-700 bg-red-100 rounded px-1">{item.error}</span>

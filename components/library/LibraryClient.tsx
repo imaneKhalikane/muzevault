@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import Image from 'next/image'
 import { Instagram, Video } from 'lucide-react'
 import { type Category, type Prompt } from '@/lib/types'
 import CategoryFilter from './CategoryFilter'
@@ -52,7 +51,7 @@ export default function LibraryClient({ categories, prompts }: Props) {
         <div className="absolute inset-0 grid grid-cols-4 gap-0.5">
           {FIXED_BANNER.map((src, i) => (
             <div key={i} className="relative overflow-hidden">
-              <Image src={src} alt="" fill className="object-cover object-top" sizes="25vw" />
+              <img src={src} alt="" className="absolute inset-0 w-full h-full object-cover object-top" />
             </div>
           ))}
         </div>
