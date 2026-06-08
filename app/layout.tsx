@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import AuthHashHandler from '@/components/AuthHashHandler'
 
 export const metadata: Metadata = {
   title: 'Solène — AI Creator Vault',
@@ -9,7 +10,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-[#fdf8f5] text-[#3d2535] antialiased">{children}</body>
+      <body className="bg-[#fdf8f5] text-[#3d2535] antialiased">
+        <AuthHashHandler />
+        {children}
+      </body>
     </html>
   )
 }
