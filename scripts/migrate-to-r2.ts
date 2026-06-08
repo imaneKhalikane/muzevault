@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * One-time migration: Supabase Storage → Cloudflare R2
  *
@@ -13,6 +14,7 @@
 import 'dotenv/config'
 import { createClient } from '@supabase/supabase-js'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import ws from 'ws'
 
 // ── Env vars ──────────────────────────────────────────────────────────────────
 
@@ -30,7 +32,9 @@ for (const [name, val] of Object.entries({ SUPABASE_URL, SUPABASE_SERVICE_KEY, R
 
 // ── Clients ───────────────────────────────────────────────────────────────────
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+  realtime: { transport: ws },
+})
 
 const r2 = new S3Client({
   region: 'auto',

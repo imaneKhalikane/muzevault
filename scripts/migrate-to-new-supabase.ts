@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * One-time migration: Old Supabase → New Supabase
  *
